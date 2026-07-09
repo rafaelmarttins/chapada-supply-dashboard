@@ -29,15 +29,16 @@ function StatCard({
   tone: "primary" | "info" | "warning" | "destructive";
 }) {
   const tones = {
-    primary: "bg-primary/15 text-primary",
-    info: "bg-info/15 text-info",
-    warning: "bg-warning/15 text-warning",
-    destructive: "bg-destructive/15 text-destructive",
+    primary: { bg: "bg-success/15", fg: "text-success", border: "border-l-success" },
+    info: { bg: "bg-info/15", fg: "text-info", border: "border-l-info" },
+    warning: { bg: "bg-warning/15", fg: "text-warning", border: "border-l-warning" },
+    destructive: { bg: "bg-destructive/15", fg: "text-destructive", border: "border-l-destructive" },
   };
+  const t = tones[tone];
   return (
-    <Card>
+    <Card className={`border-l-4 ${t.border} shadow-sm`}>
       <CardContent className="flex items-center gap-4 p-5">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${tones[tone]}`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${t.bg} ${t.fg}`}>
           <Icon className="h-6 w-6" />
         </div>
         <div className="min-w-0">
