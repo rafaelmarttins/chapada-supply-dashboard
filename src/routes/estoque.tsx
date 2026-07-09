@@ -130,7 +130,7 @@ function Estoque() {
               <TableRow>
                 <TableHead>Código</TableHead>
                 <TableHead>Suprimento</TableHead>
-                <TableHead>Secretaria</TableHead>
+                <TableHead>Categoria</TableHead>
                 <TableHead>Local</TableHead>
                 <TableHead className="text-right">Qtd</TableHead>
                 <TableHead className="text-right">Valor Unit.</TableHead>
@@ -143,7 +143,7 @@ function Estoque() {
                 <TableRow key={e.id}>
                   <TableCell className="font-mono text-xs">{e.codigo}</TableCell>
                   <TableCell className="font-medium">{e.suprimento}</TableCell>
-                  <TableCell>{e.secretaria}</TableCell>
+                  <TableCell className="text-muted-foreground">{e.categoria}</TableCell>
                   <TableCell>{e.local}</TableCell>
                   <TableCell className="text-right">{e.quantidade}</TableCell>
                   <TableCell className="text-right">{brl(e.valorUnit)}</TableCell>
