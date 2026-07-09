@@ -127,10 +127,10 @@ function RootComponent() {
         <div className="flex min-h-screen w-full bg-background text-foreground">
           <AppSidebar />
           <div className="flex flex-1 flex-col min-w-0">
-            <header className="flex h-14 items-center gap-3 border-b border-border bg-card/40 px-4">
+            <header className="flex h-14 items-center gap-3 border-b border-border bg-card px-4 shadow-sm">
               <SidebarTrigger />
               <div className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold">Painel de Suprimentos de Impressão</span>
+                <span className="text-sm font-semibold text-brand">Painel de Suprimentos de Impressão</span>
                 <span className="text-[11px] text-muted-foreground">
                   Prefeitura de Chapadão do Sul · CEGIT / DTI
                 </span>
