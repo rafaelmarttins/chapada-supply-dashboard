@@ -53,20 +53,20 @@ function StatCard({
 function Painel() {
   return (
     <div className="p-6 space-y-6">
-      {/* Header escuro */}
-      <div className="rounded-xl border border-border bg-gradient-to-r from-card via-card to-card/60 p-6 shadow-sm">
+      {/* Header — card branco com borda esquerda azul */}
+      <div className="rounded-xl border border-border border-l-4 border-l-info bg-card p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
               CEGIT / DTI · Prefeitura de Chapadão do Sul
             </div>
-            <h1 className="mt-1 text-2xl font-bold">Painel Executivo de Suprimentos</h1>
+            <h1 className="mt-1 text-2xl font-bold text-brand">Painel Executivo de Suprimentos</h1>
             <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
               Visão consolidada do parque de impressoras, estoque de suprimentos e alertas
               operacionais das secretarias municipais.
             </p>
           </div>
-          <Badge className="bg-primary/20 text-primary border border-primary/30 hover:bg-primary/20">
+          <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
             Atualizado agora
           </Badge>
         </div>
