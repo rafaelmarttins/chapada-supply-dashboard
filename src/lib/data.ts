@@ -289,34 +289,49 @@ export const estoqueResumo = {
 };
 
 // ===== Parque de Impressoras =====
-// Recalculado a partir do estoque real de toners/cartuchos (att.xlsx).
-export const estoqueAtual: Record<string, number> = {
-  "Epson T664 Preto": 30,
-  "Epson T544 Preto": 10,
-  "Brother TN3492": 8,
-  "Brother TN3472": 5,
-  "Brother TN2370": 18,
-  "Brother TN1060": 9,
-  "Brother TN116BR": 0,
-  "HP 83A": 60,
-  "HP CB435": 23,
-  "HP 17A": 5,
-  "HP 85A": 16,
-  "HP 78A": 8,
-  "HP 58X": 15,
-  "Samsung D203U": 6,
-  "Samsung D208L": 37,
-  "Samsung D201L": 2,
-  "Samsung D111L": 1,
-  "Samsung D104S": 28,
-  "Samsung D101": 19,
-  "Samsung D205L": 1,
-  "Pantum TL411X": 5,
-  "Pantum PB211EV": 0,
-  "Lexmark 56F0Z00": 4,
-  "Ricoh SP3710X": 4,
-  "Kit Plotter T3170": 0,
+// estoqueAtual é DERIVADO do estoque real — cada chave de toner soma as
+// quantidades das linhas de `estoque[]` cujo suprimento casa com um dos
+// aliases abaixo. Não editar manualmente: para alterar o saldo, edite o item
+// correspondente em `estoque[]`.
+const TONER_ALIASES: Record<string, string[]> = {
+  "Epson T544 Preto": ["EPSON 544"],
+  "Epson T664 Preto": ["EPSON 664", "EPSON 644"],
+  "Brother TN1060": ["BROTHER 1060", "TN1060"],
+  "Brother TN2370": ["TN2370", "2340/2370", "BROTHER 2340"],
+  "Brother TN3472": ["BROTHER 3472", "TN750", "TN780"],
+  "Brother TN3492": ["BROTHER 3492", "TN3662", "3492"],
+  "HP CB435A": ["CB435", "CB436", "285A"],
+  "HP 17A": ["HP 17A", "CF217"],
+  "HP 78A": ["78A", "CE278"],
+  "HP 83A": ["HP 83A", "CF283"],
+  "HP 85A": ["85A", "CE285"],
+  "HP 258X": ["258X", "CF258"],
+  "HP 410A Preto": ["PRETA HP 410A", "PRETO HP 410A", "410A PRETO"],
+  "Samsung D101": ["D101"],
+  "Samsung D104S": ["D104"],
+  "Samsung D111L": ["D111"],
+  "Samsung D203U": ["D203"],
+  "Samsung D208L": ["D208"],
+  "Samsung D201L": ["D201"],
+  "Samsung D205L": ["D205"],
+  "Pantum PB211EV": ["PB211", "PA210"],
+  "Pantum TL411X": ["TL411", "TL-411"],
+  "Lexmark 56F0Z00": ["56F0", "LEXMARK MX"],
+  "Ricoh SP3710X": ["SP3710", "RICOH"],
+  "Kit Plotter T3170": ["T3170", "PLOTTER"],
 };
+
+export const estoqueAtual: Record<string, number> = Object.fromEntries(
+  Object.entries(TONER_ALIASES).map(([key, aliases]) => [
+    key,
+    estoque
+      .filter((e) =>
+        aliases.some((a) => e.suprimento.toUpperCase().includes(a.toUpperCase()))
+      )
+      .reduce((sum, e) => sum + e.quantidade, 0),
+  ])
+);
+
 
 export type TipoImpressora = "Jato de Tinta" | "Laser PB" | "Laser Colorido" | "Plotter";
 export interface Impressora {
