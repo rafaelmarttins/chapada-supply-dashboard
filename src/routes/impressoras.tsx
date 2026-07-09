@@ -83,7 +83,7 @@ function ImpressorasPage() {
         <Card>
           <CardContent className="p-5">
             <div className="text-xs uppercase text-muted-foreground">Com Estoque de Toner</div>
-            <div className="text-2xl font-semibold text-primary">{resumo.verde}</div>
+            <div className="text-2xl font-semibold text-success">{resumo.verde}</div>
           </CardContent>
         </Card>
         <Card>
@@ -168,7 +168,7 @@ function ImpressorasPage() {
                     <TableCell className="text-right font-mono">{qtd}</TableCell>
                     <TableCell>
                       {st === "verde" && (
-                        <Badge className="bg-primary/20 text-primary border border-primary/40 hover:bg-primary/20">
+                        <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
                           🟢 Com estoque
                         </Badge>
                       )}
