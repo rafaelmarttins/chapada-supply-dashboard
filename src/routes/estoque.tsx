@@ -61,7 +61,7 @@ function Estoque() {
         <Card>
           <CardContent className="p-5">
             <div className="text-xs uppercase text-muted-foreground">Mapeados</div>
-            <div className="text-2xl font-semibold text-primary">{estoqueResumo.mapeados}</div>
+            <div className="text-2xl font-semibold text-success">{estoqueResumo.mapeados}</div>
           </CardContent>
         </Card>
         <Card>
@@ -131,7 +131,7 @@ function Estoque() {
                   <TableCell className="text-right">{brl(e.valorUnit * e.quantidade)}</TableCell>
                   <TableCell>
                     {e.mapeado ? (
-                      <Badge className="bg-primary/20 text-primary border border-primary/40 hover:bg-primary/20">
+                      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
                         Mapeado
                       </Badge>
                     ) : (

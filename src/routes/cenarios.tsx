@@ -22,7 +22,7 @@ function SituacaoBadge({ item }: { item: ItemCenario }) {
   const s = situacaoDe(item);
   if (s === "atendido")
     return (
-      <Badge className="bg-primary/20 text-primary border border-primary/40 hover:bg-primary/20">
+      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
         <CheckCircle2 className="h-3 w-3 mr-1" /> Atendido
       </Badge>
     );
@@ -84,13 +84,13 @@ function CenarioView({
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground uppercase">Cobertura</div>
-            <div className="text-2xl font-semibold text-primary">{stats.cobertura}%</div>
+            <div className="text-2xl font-semibold text-success">{stats.cobertura}%</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground uppercase">Atendidos</div>
-            <div className="text-2xl font-semibold text-primary">{stats.atendidos}</div>
+            <div className="text-2xl font-semibold text-success">{stats.atendidos}</div>
           </CardContent>
         </Card>
         <Card>
