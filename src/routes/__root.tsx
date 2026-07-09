@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 function NotFoundComponent() {
   return (
@@ -77,20 +79,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Painel de Suprimentos de Impressão · CEGIT/DTI" },
+      {
+        name: "description",
+        content:
+          "Dashboard executivo de suprimentos de impressão da Prefeitura de Chapadão do Sul — CEGIT/DTI.",
+      },
+      { property: "og:title", content: "Painel de Suprimentos de Impressão · CEGIT/DTI" },
+      {
+        property: "og:description",
+        content: "Gestão executiva do parque de impressoras e suprimentos — Chapadão do Sul.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -119,8 +123,25 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-background text-foreground">
+          <AppSidebar />
+          <div className="flex flex-1 flex-col min-w-0">
+            <header className="flex h-14 items-center gap-3 border-b border-border bg-card/40 px-4">
+              <SidebarTrigger />
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-semibold">Painel de Suprimentos de Impressão</span>
+                <span className="text-[11px] text-muted-foreground">
+                  Prefeitura de Chapadão do Sul · CEGIT / DTI
+                </span>
+              </div>
+            </header>
+            <main className="flex-1 overflow-x-hidden">
+              <Outlet />
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
