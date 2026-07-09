@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Upload,
   FileText,
-  Sparkles,
 } from "lucide-react";
 import { resumo, alertasCriticos, fases } from "@/lib/data";
 
@@ -130,31 +129,6 @@ function Painel() {
             value="74%"
             sub={`${resumo.itensCriticos} itens em risco`}
             bar
-          />
-        </div>
-      </div>
-
-      {/* Sugestões (estilo "Atena sugere") */}
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          <span className="inline-block h-2 w-2 rounded-full bg-lime" />
-          Análise automática · sugestões
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <SuggestionCard
-            title="8 itens críticos exigem ação imediata"
-            desc="Concentre a compra emergencial em Saúde e Educação para restabelecer o nível de serviço."
-            cta="Resolver"
-          />
-          <SuggestionCard
-            title="Ata vigente cobre 62% da demanda"
-            desc="Aciona a ata para os 12 itens de maior giro e evita nova licitação neste exercício."
-            cta="Registrar"
-          />
-          <SuggestionCard
-            title="4 modelos concentram 58% do custo"
-            desc="Padronizar substituição eleva a previsibilidade orçamentária dos próximos ciclos."
-            cta="Ver análise"
           />
         </div>
       </div>
@@ -319,30 +293,3 @@ function HeroStat({
   );
 }
 
-function SuggestionCard({
-  title,
-  desc,
-  cta,
-}: {
-  title: string;
-  desc: string;
-  cta: string;
-}) {
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="flex items-start gap-3 p-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand text-lime">
-          <Sparkles className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-foreground">{title}</div>
-          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{desc}</p>
-        </div>
-        <button className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-lime-foreground hover:underline">
-          {cta}
-          <ArrowRight className="h-3 w-3" />
-        </button>
-      </CardContent>
-    </Card>
-  );
-}
