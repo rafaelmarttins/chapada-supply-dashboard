@@ -27,11 +27,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand text-brand-foreground">
             <Printer className="h-5 w-5" />
           </div>
           <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold leading-tight">CEGIT / DTI</span>
+            <span className="text-sm font-semibold leading-tight text-brand">CEGIT / DTI</span>
             <span className="text-[11px] text-muted-foreground leading-tight truncate">
               Chapadão do Sul
             </span>
