@@ -9,8 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as EstoqueRouteImport } from './routes/estoque'
+import { Route as CenariosRouteImport } from './routes/cenarios'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ImportarRoute = ImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstoqueRoute = EstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CenariosRoute = CenariosRouteImport.update({
+  id: '/cenarios',
+  path: '/cenarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +37,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cenarios': typeof CenariosRoute
+  '/estoque': typeof EstoqueRoute
+  '/importar': typeof ImportarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cenarios': typeof CenariosRoute
+  '/estoque': typeof EstoqueRoute
+  '/importar': typeof ImportarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cenarios': typeof CenariosRoute
+  '/estoque': typeof EstoqueRoute
+  '/importar': typeof ImportarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/cenarios' | '/estoque' | '/importar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/cenarios' | '/estoque' | '/importar'
+  id: '__root__' | '/' | '/cenarios' | '/estoque' | '/importar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CenariosRoute: typeof CenariosRoute
+  EstoqueRoute: typeof EstoqueRoute
+  ImportarRoute: typeof ImportarRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/importar': {
+      id: '/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof ImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estoque': {
+      id: '/estoque'
+      path: '/estoque'
+      fullPath: '/estoque'
+      preLoaderRoute: typeof EstoqueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cenarios': {
+      id: '/cenarios'
+      path: '/cenarios'
+      fullPath: '/cenarios'
+      preLoaderRoute: typeof CenariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CenariosRoute: CenariosRoute,
+  EstoqueRoute: EstoqueRoute,
+  ImportarRoute: ImportarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
