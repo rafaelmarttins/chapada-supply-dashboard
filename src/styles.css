@@ -64,13 +64,17 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.02 260);
 
-  /* Brand = azul escuro corporativo #1F3864 (usado em item ativo, header) */
-  --brand: oklch(0.34 0.09 260);
+  /* Brand = navy quase preto (hero, header) — estilo PCA Inteligente */
+  --brand: oklch(0.19 0.02 250);                 /* ~#0f1524 */
   --brand-foreground: oklch(1 0 0);
 
-  /* Primary = azul institucional #2F5496 (botões, destaque) */
-  --primary: oklch(0.46 0.12 260);
-  --primary-foreground: oklch(1 0 0);
+  /* Lime = accent verde neon (#A3E635) — CTAs, progresso, tab ativo */
+  --lime: oklch(0.88 0.22 130);
+  --lime-foreground: oklch(0.19 0.02 250);
+
+  /* Primary = lime também é o primário visual do sistema PCA */
+  --primary: oklch(0.88 0.22 130);
+  --primary-foreground: oklch(0.19 0.02 250);
 
   --secondary: oklch(0.955 0.005 250);           /* cinza muito claro */
   --secondary-foreground: oklch(0.30 0.02 260);
