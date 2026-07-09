@@ -29,25 +29,33 @@ const brl = (n: number) =>
 
 function Estoque() {
   const [status, setStatus] = useState<"todos" | "mapeado" | "nao_mapeado">("todos");
+  const [categoria, setCategoria] = useState<string>("todas");
   const [busca, setBusca] = useState("");
+
+  const categorias = useMemo(
+    () => Array.from(new Set(estoque.map((e) => e.categoria))).sort(),
+    []
+  );
 
   const items = useMemo(() => {
     return estoque.filter((e) => {
       if (status === "mapeado" && !e.mapeado) return false;
       if (status === "nao_mapeado" && e.mapeado) return false;
+      if (categoria !== "todas" && e.categoria !== categoria) return false;
       if (busca) {
         const q = busca.toLowerCase();
         if (
           !e.suprimento.toLowerCase().includes(q) &&
           !e.codigo.toLowerCase().includes(q) &&
-          !e.secretaria.toLowerCase().includes(q) &&
+          !e.categoria.toLowerCase().includes(q) &&
           !e.local.toLowerCase().includes(q)
         )
           return false;
       }
       return true;
     });
-  }, [status, busca]);
+  }, [status, categoria, busca]);
+
 
   return (
     <div className="p-6 space-y-5">
