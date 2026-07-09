@@ -101,6 +101,17 @@ function Estoque() {
               onChange={(e) => setBusca(e.target.value)}
               className="sm:w-72"
             />
+            <Select value={categoria} onValueChange={setCategoria}>
+              <SelectTrigger className="sm:w-52">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas categorias</SelectItem>
+                {categorias.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
               <SelectTrigger className="sm:w-48">
                 <SelectValue />
