@@ -34,6 +34,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -51,48 +53,78 @@
 
 :root {
   --radius: 0.5rem;
-  /* Dark theme applied globally */
-  --background: oklch(0.17 0.012 260);         /* #0f1117 */
-  --foreground: oklch(0.96 0.005 260);
-  --card: oklch(0.22 0.014 260);               /* #1a1d27 */
-  --card-foreground: oklch(0.96 0.005 260);
-  --popover: oklch(0.22 0.014 260);
-  --popover-foreground: oklch(0.96 0.005 260);
-  --primary: oklch(0.68 0.19 145);             /* verde #00B050 */
-  --primary-foreground: oklch(0.12 0.02 260);
-  --secondary: oklch(0.28 0.015 260);
-  --secondary-foreground: oklch(0.96 0.005 260);
-  --muted: oklch(0.26 0.014 260);
-  --muted-foreground: oklch(0.68 0.02 260);
-  --accent: oklch(0.30 0.02 260);
-  --accent-foreground: oklch(0.96 0.005 260);
-  --destructive: oklch(0.53 0.22 27);          /* vermelho #C00000 */
-  --destructive-foreground: oklch(0.98 0.005 260);
-  --success: oklch(0.68 0.19 145);             /* #00B050 */
-  --success-foreground: oklch(0.12 0.02 260);
-  --warning: oklch(0.72 0.17 55);              /* laranja #ED7D31 */
-  --warning-foreground: oklch(0.12 0.02 260);
-  --info: oklch(0.52 0.14 260);                /* azul #2F5496 */
-  --info-foreground: oklch(0.98 0.005 260);
-  --border: oklch(0.32 0.015 260);
-  --input: oklch(0.30 0.015 260);
-  --ring: oklch(0.68 0.19 145);
-  --chart-1: oklch(0.68 0.19 145);
-  --chart-2: oklch(0.72 0.17 55);
-  --chart-3: oklch(0.53 0.22 27);
-  --chart-4: oklch(0.52 0.14 260);
-  --chart-5: oklch(0.75 0.14 200);
-  --sidebar: oklch(0.20 0.014 260);
-  --sidebar-foreground: oklch(0.92 0.005 260);
-  --sidebar-primary: oklch(0.68 0.19 145);
-  --sidebar-primary-foreground: oklch(0.12 0.02 260);
-  --sidebar-accent: oklch(0.28 0.02 260);
-  --sidebar-accent-foreground: oklch(0.96 0.005 260);
-  --sidebar-border: oklch(0.30 0.015 260);
-  --sidebar-ring: oklch(0.68 0.19 145);
+
+  /* Light theme — PCA Inteligente style */
+  --background: oklch(0.975 0.003 250);          /* #F4F6F9 */
+  --foreground: oklch(0.22 0.02 260);            /* cinza escuro / quase preto */
+
+  --card: oklch(1 0 0);                          /* #FFFFFF */
+  --card-foreground: oklch(0.22 0.02 260);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 260);
+
+  /* Brand = azul escuro corporativo #1F3864 (usado em item ativo, header) */
+  --brand: oklch(0.34 0.09 260);
+  --brand-foreground: oklch(1 0 0);
+
+  /* Primary = azul institucional #2F5496 (botões, destaque) */
+  --primary: oklch(0.46 0.12 260);
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.955 0.005 250);           /* cinza muito claro */
+  --secondary-foreground: oklch(0.30 0.02 260);
+
+  --muted: oklch(0.97 0.004 250);                /* #F9FAFB */
+  --muted-foreground: oklch(0.50 0.015 260);     /* cinza médio */
+
+  --accent: oklch(0.955 0.005 250);
+  --accent-foreground: oklch(0.30 0.02 260);
+
+  --destructive: oklch(0.48 0.20 27);            /* #C00000 */
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.62 0.17 145);               /* verde #00B050 */
+  --success-foreground: oklch(1 0 0);
+
+  --warning: oklch(0.70 0.16 55);                /* laranja #ED7D31 */
+  --warning-foreground: oklch(1 0 0);
+
+  --info: oklch(0.46 0.12 260);                  /* azul #2F5496 */
+  --info-foreground: oklch(1 0 0);
+
+  --border: oklch(0.92 0.005 250);               /* #E5E7EB */
+  --input: oklch(0.92 0.005 250);
+  --ring: oklch(0.46 0.12 260);
+
+  --chart-1: oklch(0.62 0.17 145);
+  --chart-2: oklch(0.70 0.16 55);
+  --chart-3: oklch(0.48 0.20 27);
+  --chart-4: oklch(0.46 0.12 260);
+  --chart-5: oklch(0.60 0.14 200);
+
+  /* Sidebar — branco, item ativo azul escuro */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.30 0.02 260);
+  --sidebar-primary: oklch(0.34 0.09 260);            /* #1F3864 */
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.955 0.005 250);           /* hover cinza claro */
+  --sidebar-accent-foreground: oklch(0.30 0.02 260);
+  --sidebar-border: oklch(0.92 0.005 250);
+  --sidebar-ring: oklch(0.46 0.12 260);
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* Linhas alternadas suaves em tabelas */
+@utility table-zebra {
+  & tbody tr:nth-child(even) {
+    background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+  }
 }
