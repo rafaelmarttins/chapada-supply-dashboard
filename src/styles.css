@@ -25,15 +25,15 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-lime: var(--lime);
@@ -51,12 +51,16 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Font families */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
   --radius: 0.5rem;
 
-  /* Light theme — PCA Inteligente style */
+  /* Light theme — municipal green */
   --background: oklch(0.975 0.003 250);          /* #F4F6F9 */
   --foreground: oklch(0.22 0.02 260);            /* cinza escuro / quase preto */
 
@@ -66,17 +70,17 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.02 260);
 
-  /* Brand = navy quase preto (hero, header) — estilo PCA Inteligente */
-  --brand: oklch(0.19 0.02 250);                 /* ~#0f1524 */
+  /* Brand = verde municipal escuro */
+  --brand: oklch(0.38 0.10 160);                 /* ~#064E3B */
   --brand-foreground: oklch(1 0 0);
 
-  /* Lime = accent verde neon (#A3E635) — CTAs, progresso, tab ativo */
+  /* Lime = verde claro municipal */
   --lime: oklch(0.88 0.22 130);
-  --lime-foreground: oklch(0.19 0.02 250);
+  --lime-foreground: oklch(0.38 0.10 160);
 
-  /* Primary = lime também é o primário visual do sistema PCA */
-  --primary: oklch(0.88 0.22 130);
-  --primary-foreground: oklch(0.19 0.02 250);
+  /* Primary = verde municipal vivo */
+  --primary: oklch(0.62 0.17 145);               /* #00B050 */
+  --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.955 0.005 250);           /* cinza muito claro */
   --secondary-foreground: oklch(0.30 0.02 260);
@@ -101,7 +105,7 @@
 
   --border: oklch(0.92 0.005 250);               /* #E5E7EB */
   --input: oklch(0.92 0.005 250);
-  --ring: oklch(0.46 0.12 260);
+  --ring: oklch(0.62 0.17 145);
 
   --chart-1: oklch(0.62 0.17 145);
   --chart-2: oklch(0.70 0.16 55);
@@ -109,15 +113,15 @@
   --chart-4: oklch(0.46 0.12 260);
   --chart-5: oklch(0.60 0.14 200);
 
-  /* Sidebar — branco, item ativo azul escuro */
+  /* Sidebar — branco, item ativo verde municipal */
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.30 0.02 260);
-  --sidebar-primary: oklch(0.34 0.09 260);            /* #1F3864 */
+  --sidebar-primary: oklch(0.38 0.10 160);            /* #064E3B */
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.955 0.005 250);           /* hover cinza claro */
   --sidebar-accent-foreground: oklch(0.30 0.02 260);
   --sidebar-border: oklch(0.92 0.005 250);
-  --sidebar-ring: oklch(0.46 0.12 260);
+  --sidebar-ring: oklch(0.62 0.17 145);
 }
 
 @layer base {
@@ -125,6 +129,10 @@
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
   }
 }
 
@@ -133,4 +141,9 @@
   & tbody tr:nth-child(even) {
     background-color: color-mix(in oklab, var(--muted) 60%, transparent);
   }
+}
+
+/* Font utility for numeric dashboard values */
+@utility font-mono-display {
+  font-family: var(--font-mono);
 }

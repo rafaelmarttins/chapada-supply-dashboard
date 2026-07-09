@@ -7,7 +7,7 @@ import {
   Package,
   DollarSign,
   AlertTriangle,
-  ArrowRight,
+  CheckCircle2,
   Upload,
   FileText,
 } from "lucide-react";
@@ -20,236 +20,240 @@ export const Route = createFileRoute("/")({
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-function KpiCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  tone: "warning" | "destructive" | "info" | "success";
-}) {
-  const tones = {
-    warning: "bg-warning/15 text-warning",
-    destructive: "bg-destructive/15 text-destructive",
-    info: "bg-info/15 text-info",
-    success: "bg-success/15 text-success",
-  } as const;
-  return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-full ${tones[tone]}`}>
-            <Icon className="h-4 w-4" />
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <div className="mt-3 text-sm text-muted-foreground">{label}</div>
-        <div className="mt-1 text-4xl font-bold tracking-tight text-foreground">{value}</div>
-        {sub && <div className="mt-2 text-xs text-muted-foreground">{sub}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
 function Painel() {
   const prontidao = 62;
+  const cobertura = 74;
+
   return (
     <div className="p-6 space-y-6">
-      {/* Hero dark — estilo PCA Inteligente */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand text-brand-foreground p-8 shadow-lg">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full"
-          style={{
-            background:
-              "radial-gradient(closest-side, color-mix(in oklab, var(--lime) 35%, transparent), transparent 70%)",
-          }}
-        />
-        <div className="relative grid gap-8 lg:grid-cols-[1fr_auto_auto_auto_auto] lg:items-center">
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-widest text-white/60">
-              Exercício 2026 · Consolidado
+      {/* Header municipal */}
+      <Card className="shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
+                Prefeitura de Chapadão do Sul
+              </p>
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-foreground">
+                Painel Executivo de Suprimentos
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Visão consolidada do parque de impressoras, estoque e alertas operacionais.
+              </p>
             </div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              Painel Executivo de Suprimentos
-            </h1>
-            <p className="mt-1 text-sm text-white/70 max-w-xl">
-              Visão consolidada do parque de impressoras, estoque e alertas operacionais das
-              secretarias municipais.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button className="bg-lime text-lime-foreground hover:bg-lime/90 font-semibold">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge
+                variant="outline"
+                className="h-8 gap-1.5 border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                </span>
+                Sincronizado: agora
+              </Badge>
+              <Button size="sm" className="gap-1.5">
                 <Upload className="h-4 w-4" />
                 Importar CSV
               </Button>
-              <Button
-                variant="secondary"
-                className="bg-white/10 text-white hover:bg-white/20 border-0"
-              >
+              <Button variant="outline" size="sm" className="gap-1.5">
                 <FileText className="h-4 w-4" />
-                Gerar relatório
+                Relatório
               </Button>
             </div>
-          </div>
-
-          {/* Score de prontidão — gauge circular */}
-          <div className="flex flex-col items-center justify-center">
-            <div
-              className="relative flex h-28 w-28 items-center justify-center rounded-full"
-              style={{
-                background: `conic-gradient(var(--lime) ${prontidao * 3.6}deg, rgba(255,255,255,0.08) 0)`,
-              }}
-            >
-              <div className="flex h-[88px] w-[88px] flex-col items-center justify-center rounded-full bg-brand">
-                <span className="text-2xl font-bold text-lime">{prontidao}%</span>
-                <span className="text-[9px] uppercase tracking-wider text-white/60">
-                  prontidão
-                </span>
-              </div>
-            </div>
-            <span className="mt-2 text-[10px] uppercase tracking-widest text-white/60">
-              Score operacional
-            </span>
-          </div>
-
-          <HeroStat label="Impressoras" value={String(resumo.impressoras)} sub="parque ativo" />
-          <HeroStat
-            label="Valor do estoque"
-            value={brl(resumo.valorEstoque).replace("R$", "R$ ")}
-            sub={`${resumo.estoqueUnidades} unidades`}
-            highlight
-          />
-          <HeroStat
-            label="Cobertura"
-            value="74%"
-            sub={`${resumo.itensCriticos} itens em risco`}
-            bar
-          />
-        </div>
-      </div>
-
-      {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Itens sem estoque"
-          value="8"
-          sub="priorizar reposição"
-          icon={AlertTriangle}
-          tone="destructive"
-        />
-        <KpiCard
-          label="Estoque baixo"
-          value="14"
-          sub="≤ 2 unidades disponíveis"
-          icon={Package}
-          tone="warning"
-        />
-        <KpiCard
-          label="Impressoras mapeadas"
-          value={String(resumo.impressoras)}
-          sub="100% do parque"
-          icon={Printer}
-          tone="info"
-        />
-        <KpiCard
-          label="Cobertura por ata"
-          value="62%"
-          sub="dos itens com contrato vigente"
-          icon={DollarSign}
-          tone="success"
-        />
-      </div>
-
-      {/* Alertas críticos */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Alertas Críticos
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Suprimentos zerados ou com risco iminente de ruptura.
-            </p>
-          </div>
-          <Badge variant="destructive">{alertasCriticos.length} itens</Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-            {alertasCriticos.map((a, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-accent/40 transition-colors"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/15 text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{a.suprimento}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {a.secretaria} · {a.local}
-                  </div>
-                </div>
-                <Badge variant="destructive" className="shrink-0">
-                  {a.situacao}
-                </Badge>
-                <div className="hidden sm:block text-xs text-muted-foreground w-20 text-right">
-                  {a.dias === 0 ? "Zerado" : `~${a.dias} dias`}
-                </div>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Linha do tempo — 3 fases */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Estratégia em 3 Fases</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Roadmap de continuidade operacional do serviço de impressão municipal.
-          </p>
+      {/* Main grid: KPIs + Alertas */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Left column — score + quick stats + valor */}
+        <div className="space-y-6 lg:col-span-4">
+          {/* Score de prontidão */}
+          <Card className="shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  Score de Prontidão
+                </h3>
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+              </div>
+              <div className="mt-4 flex items-end gap-4">
+                <span className="text-5xl font-black leading-none text-foreground font-mono-display">
+                  {prontidao}%
+                </span>
+                <div className="flex-1 self-center">
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${prontidao}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Baseado em estoque disponível, cobertura de ata e itens críticos.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Quick stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Printer className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                    Impressoras
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-foreground font-mono-display">
+                  {resumo.impressoras}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Package className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                    Cobertura
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-foreground font-mono-display">
+                  {cobertura}%
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Valor do estoque */}
+          <Card className="border-0 bg-primary text-primary-foreground shadow-sm">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 text-primary-foreground/80">
+                <DollarSign className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                  Valor do Estoque
+                </span>
+              </div>
+              <p className="mt-2 text-3xl font-bold font-mono-display">
+                {brl(resumo.valorEstoque)}
+              </p>
+              <p className="mt-1 text-xs text-primary-foreground/80">
+                {resumo.estoqueUnidades} unidades em estoque
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column — alertas críticos */}
+        <div className="lg:col-span-8">
+          <Card className="h-full shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Alertas Críticos e Disponibilidade
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Suprimentos zerados ou com risco iminente de ruptura.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-destructive/30 bg-destructive/10 text-destructive"
+                >
+                  <span className="h-2 w-2 rounded-full bg-destructive" />
+                  {resumo.itensCriticos} sem estoque
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-warning/30 bg-warning/10 text-warning"
+                >
+                  <span className="h-2 w-2 rounded-full bg-warning" />
+                  14 baixo
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Secretaria</th>
+                      <th className="px-4 py-3 font-bold">Local / Setor</th>
+                      <th className="px-4 py-3 font-bold">Suprimento</th>
+                      <th className="px-4 py-3 font-bold">Situação</th>
+                      <th className="px-4 py-3 font-bold text-right">Prazo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {alertasCriticos.map((a, i) => (
+                      <tr key={i} className="hover:bg-accent/40 transition-colors">
+                        <td className="px-4 py-3 font-medium">{a.secretaria}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{a.local}</td>
+                        <td className="px-4 py-3">{a.suprimento}</td>
+                        <td className="px-4 py-3">
+                          {a.situacao === "Sem estoque" ? (
+                            <Badge variant="destructive">{a.situacao}</Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-warning/30 bg-warning/10 text-warning"
+                            >
+                              {a.situacao}
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs text-muted-foreground">
+                          {a.dias === 0 ? "Zerado" : `~${a.dias} dias`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Roadmap de 3 fases */}
+      <Card className="shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Roadmap de Implementação
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3 relative">
+        <CardContent className="pb-8">
+          <div className="relative grid gap-8 md:grid-cols-3">
+            {/* connecting line */}
+            <div className="absolute left-0 top-4 hidden h-0.5 w-full bg-border md:block" />
+
             {fases.map((f, i) => {
-              const border =
-                f.cor === "success"
-                  ? "border-success/40"
-                  : f.cor === "info"
-                  ? "border-info/40"
-                  : "border-warning/40";
-              const dot =
-                f.cor === "success"
-                  ? "bg-success text-success-foreground"
-                  : f.cor === "info"
-                  ? "bg-info text-info-foreground"
-                  : "bg-warning text-warning-foreground";
+              const done = i < 2;
+              const current = i === 1;
               return (
-                <div key={f.fase} className="relative">
-                  <div className={`rounded-lg border ${border} bg-card p-5 h-full`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${dot}`}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Fase {i + 1}
-                        </div>
-                        <div className="text-base font-semibold">{f.fase}</div>
-                      </div>
+                <div key={f.fase} className="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                      done
+                        ? "bg-primary text-primary-foreground"
+                        : "border-2 border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {i === 0 ? "Concluído" : current ? "Em curso" : "Próxima fase"}
                     </div>
-                    <div className="mt-4 text-sm font-medium">{f.titulo}</div>
+                    <div className="mt-1 text-base font-semibold text-foreground">
+                      {f.titulo}
+                    </div>
                     <p className="mt-1 text-sm text-muted-foreground">{f.descricao}</p>
                   </div>
-                  {i < fases.length - 1 && (
-                    <ArrowRight className="hidden md:block absolute top-1/2 -right-3 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  )}
                 </div>
               );
             })}
@@ -259,37 +263,3 @@ function Painel() {
     </div>
   );
 }
-
-function HeroStat({
-  label,
-  value,
-  sub,
-  highlight,
-  bar,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  highlight?: boolean;
-  bar?: boolean;
-}) {
-  return (
-    <div className="min-w-[140px]">
-      <div className="text-xs text-white/60">{label}</div>
-      <div
-        className={`mt-1 text-2xl font-bold tracking-tight ${
-          highlight ? "text-lime" : "text-white"
-        }`}
-      >
-        {value}
-      </div>
-      {bar && (
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-          <div className="h-full w-[74%] rounded-full bg-lime" />
-        </div>
-      )}
-      {sub && <div className="mt-1 text-[11px] text-white/50">{sub}</div>}
-    </div>
-  );
-}
-
