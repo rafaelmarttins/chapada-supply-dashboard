@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ImpressorasRouteImport } from './routes/impressoras'
 import { Route as ImportarRouteImport } from './routes/importar'
 import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as CenariosRouteImport } from './routes/cenarios'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ImpressorasRoute = ImpressorasRouteImport.update({
+  id: '/impressoras',
+  path: '/impressoras',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImportarRoute = ImportarRouteImport.update({
   id: '/importar',
   path: '/importar',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/cenarios': typeof CenariosRoute
   '/estoque': typeof EstoqueRoute
   '/importar': typeof ImportarRoute
+  '/impressoras': typeof ImpressorasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cenarios': typeof CenariosRoute
   '/estoque': typeof EstoqueRoute
   '/importar': typeof ImportarRoute
+  '/impressoras': typeof ImpressorasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/cenarios': typeof CenariosRoute
   '/estoque': typeof EstoqueRoute
   '/importar': typeof ImportarRoute
+  '/impressoras': typeof ImpressorasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cenarios' | '/estoque' | '/importar'
+  fullPaths: '/' | '/cenarios' | '/estoque' | '/importar' | '/impressoras'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cenarios' | '/estoque' | '/importar'
-  id: '__root__' | '/' | '/cenarios' | '/estoque' | '/importar'
+  to: '/' | '/cenarios' | '/estoque' | '/importar' | '/impressoras'
+  id: '__root__' | '/' | '/cenarios' | '/estoque' | '/importar' | '/impressoras'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +76,18 @@ export interface RootRouteChildren {
   CenariosRoute: typeof CenariosRoute
   EstoqueRoute: typeof EstoqueRoute
   ImportarRoute: typeof ImportarRoute
+  ImpressorasRoute: typeof ImpressorasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/impressoras': {
+      id: '/impressoras'
+      path: '/impressoras'
+      fullPath: '/impressoras'
+      preLoaderRoute: typeof ImpressorasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/importar': {
       id: '/importar'
       path: '/importar'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   CenariosRoute: CenariosRoute,
   EstoqueRoute: EstoqueRoute,
   ImportarRoute: ImportarRoute,
+  ImpressorasRoute: ImpressorasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
