@@ -172,7 +172,7 @@ function Painel() {
                   className="gap-1.5 border-warning/30 bg-warning/10 text-warning"
                 >
                   <span className="h-2 w-2 rounded-full bg-warning" />
-                  14 baixo
+                  {resumo.estoqueBaixo} baixo
                 </Badge>
               </div>
             </CardHeader>
