@@ -666,7 +666,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SESOP", local: "Pátio de Obras - COP", modelo: "Brother L6912", tipo: "Laser PB", toner: "Brother TN3492" },
   { secretaria: "SESOP", local: "Pátio de Obras - GFCC", modelo: "Samsung 5835", tipo: "Laser PB", toner: "Samsung D208L" },
   { secretaria: "SESOP", local: "Pátio de Obras - Oficina", modelo: "Samsung M4070", tipo: "Laser PB", toner: "Samsung D203U" },
-  { secretaria: "SEDEMA", local: "CANIL", modelo: "Lexmark MX421", tipo: "Laser PB", toner: "Lexmark 56F0Z00" },
+  { secretaria: "SEDEMA", local: "CANIL", modelo: "Lexmark MX421", tipo: "Laser PB", toner: "Lexmark 56F1H00" },
   { secretaria: "SEDEMA", local: "CTR", modelo: "Brother 5652", tipo: "Laser PB", toner: "Brother TN3472" },
   { secretaria: "SEDEMA", local: "AGIPEQ/SEDEMA", modelo: "Epson L3250", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEDEMA", local: "SEDEMA", modelo: "Brother 6902W", tipo: "Laser PB", toner: "Brother TN3492" },
