@@ -690,7 +690,7 @@ export function statusImpressora(imp: Impressora): "verde" | "amarelo" | "vermel
 // ============================================================================
 
 // Rendimento médio de páginas por unidade de suprimento (estimativa fabricante).
-const RENDIMENTO_PAGINAS: Record<string, number> = {
+export const RENDIMENTO_PAGINAS: Record<string, number> = {
   "Epson T544 Preto": 4500,
   "Epson T664 Preto": 4000,
   "Brother TN1060": 1000,
@@ -720,7 +720,7 @@ const RENDIMENTO_PAGINAS: Record<string, number> = {
 
 // Volume médio estimado de páginas/mês por tipo de impressora (repartição
 // pública de pequeno/médio porte). Ajustar depois com dados reais.
-const VOLUME_MENSAL_ESTIMADO: Record<TipoImpressora, number | null> = {
+export const VOLUME_MENSAL_ESTIMADO: Record<TipoImpressora, number | null> = {
   "Jato de Tinta": 300,
   "Laser PB": 600,
   "Laser Colorido": 400,
@@ -835,3 +835,144 @@ export const autonomiaEstoque = new Proxy(
     },
   }
 );
+
+// ============================================================================
+// Simulador de Priorização de Estoque
+// ============================================================================
+
+export interface CoberturaToner {
+  toner: string;
+  estoqueUnidades: number;
+  necessidadePrioridade: number;
+  necessidadeRestante: number;
+  coberturaPrioridade: number;
+  coberturaRestante: number;
+}
+
+export interface CoberturaLocal {
+  secretaria: string;
+  local: string;
+  prioridade: boolean;
+  tonerCritico: string | null;
+  cobertura: number | null;
+  situacao: "atendido" | "parcial" | "nao_atendido" | "sem_dado";
+}
+
+export interface ResumoCobertura {
+  atendidos: number;
+  parciais: number;
+  naoAtendidos: number;
+  total: number;
+}
+
+export function simularPriorizacao(secretariasPrioritarias: string[]): {
+  porToner: CoberturaToner[];
+  porLocal: CoberturaLocal[];
+  resumoPrioridade: ResumoCobertura;
+  resumoRestante: ResumoCobertura;
+} {
+  const prioSet = new Set(secretariasPrioritarias);
+  const necUnidade = (imp: Impressora): number => {
+    const rend = RENDIMENTO_PAGINAS[imp.toner];
+    if (!rend) return 0;
+    const vol = VOLUME_MENSAL_ESTIMADO[imp.tipo] ?? 0;
+    return vol / rend;
+  };
+
+  // Por toner
+  const porToner: CoberturaToner[] = Object.keys(RENDIMENTO_PAGINAS).map((toner) => {
+    const imps = impressoras.filter((i) => i.toner === toner);
+    let necPrio = 0;
+    let necRest = 0;
+    for (const imp of imps) {
+      const n = necUnidade(imp);
+      if (prioSet.has(imp.secretaria)) necPrio += n;
+      else necRest += n;
+    }
+    const estoqueUnidades = estoqueAtual[toner] ?? 0;
+    let coberturaPrioridade: number;
+    let coberturaRestante: number;
+    if (estoqueUnidades >= necPrio) {
+      coberturaPrioridade = 1;
+      const sobra = estoqueUnidades - necPrio;
+      coberturaRestante = necRest > 0 ? Math.min(1, sobra / necRest) : 1;
+    } else {
+      coberturaPrioridade = necPrio > 0 ? estoqueUnidades / necPrio : 1;
+      coberturaRestante = 0;
+    }
+    return {
+      toner,
+      estoqueUnidades,
+      necessidadePrioridade: necPrio,
+      necessidadeRestante: necRest,
+      coberturaPrioridade,
+      coberturaRestante,
+    };
+  });
+
+  const covMap = new Map(porToner.map((c) => [c.toner, c]));
+
+  // Agrupar por secretaria+local
+  const groups = new Map<string, Impressora[]>();
+  for (const imp of impressoras) {
+    const k = `${imp.secretaria}||${imp.local}`;
+    const arr = groups.get(k) ?? [];
+    arr.push(imp);
+    groups.set(k, arr);
+  }
+
+  const porLocal: CoberturaLocal[] = [];
+  for (const [k, imps] of groups) {
+    const [secretaria, local] = k.split("||");
+    const prioridade = prioSet.has(secretaria);
+    let pior: { toner: string; cobertura: number } | null = null;
+    for (const imp of imps) {
+      const c = covMap.get(imp.toner);
+      if (!c || !RENDIMENTO_PAGINAS[imp.toner]) continue;
+      const cov = prioridade ? c.coberturaPrioridade : c.coberturaRestante;
+      if (!pior || cov < pior.cobertura) pior = { toner: imp.toner, cobertura: cov };
+    }
+    if (!pior) {
+      porLocal.push({
+        secretaria,
+        local,
+        prioridade,
+        tonerCritico: null,
+        cobertura: null,
+        situacao: "sem_dado",
+      });
+    } else {
+      const situacao: CoberturaLocal["situacao"] =
+        pior.cobertura >= 0.999 ? "atendido" : pior.cobertura > 0 ? "parcial" : "nao_atendido";
+      porLocal.push({
+        secretaria,
+        local,
+        prioridade,
+        tonerCritico: pior.toner,
+        cobertura: pior.cobertura,
+        situacao,
+      });
+    }
+  }
+
+  const rankSit = (s: CoberturaLocal["situacao"]) =>
+    s === "nao_atendido" ? 0 : s === "parcial" ? 1 : s === "atendido" ? 2 : 3;
+  porLocal.sort((a, b) => rankSit(a.situacao) - rankSit(b.situacao));
+
+  const contar = (rows: CoberturaLocal[]): ResumoCobertura => {
+    const filtrado = rows.filter((r) => r.situacao !== "sem_dado");
+    return {
+      atendidos: filtrado.filter((r) => r.situacao === "atendido").length,
+      parciais: filtrado.filter((r) => r.situacao === "parcial").length,
+      naoAtendidos: filtrado.filter((r) => r.situacao === "nao_atendido").length,
+      total: filtrado.length,
+    };
+  };
+
+  return {
+    porToner,
+    porLocal,
+    resumoPrioridade: contar(porLocal.filter((l) => l.prioridade)),
+    resumoRestante: contar(porLocal.filter((l) => !l.prioridade)),
+  };
+}
