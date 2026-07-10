@@ -913,7 +913,7 @@ export function simularPriorizacao(secretariasPrioritarias: string[]): {
   const necUnidade = (imp: Impressora): number => {
     const rend = RENDIMENTO_PAGINAS[imp.toner];
     if (!rend) return 0;
-    const vol = VOLUME_MENSAL_ESTIMADO[imp.tipo] ?? 0;
+    const vol = volumeMensalReal(imp) ?? 0;
     return vol / rend;
   };
 
