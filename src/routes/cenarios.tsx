@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import {
   autonomiaEstoque,
+  estoqueAtual,
   impressoras,
   simularPriorizacao,
   type AutonomiaStatus,
