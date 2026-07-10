@@ -1,20 +1,68 @@
-export const resumo = {
-  impressoras: 232,
-  estoqueUnidades: 456,
-  valorEstoque: 58258.48,
-  itensCriticos: 8,
+// resumo e alertasCriticos são DERIVADOS de `estoque[]` / `impressoras[]`
+// (declarados mais abaixo). Usamos Proxy com getters para adiar o cálculo
+// até o primeiro uso — assim as declarações posteriores já existem.
+
+type Resumo = {
+  impressoras: number;
+  estoqueUnidades: number;
+  valorEstoque: number;
+  itensCriticos: number;
+  estoqueBaixo: number;
 };
 
-export const alertasCriticos = [
-  { secretaria: "Saúde", local: "UBS Central", suprimento: "Toner HP CF283A", situacao: "Sem estoque", dias: 0 },
-  { secretaria: "Educação", local: "EMEF Rui Barbosa", suprimento: "Toner Brother TN-1060", situacao: "Sem estoque", dias: 0 },
-  { secretaria: "Saúde", local: "Hospital Municipal", suprimento: "Toner HP CE285A", situacao: "Crítico", dias: 3 },
-  { secretaria: "Administração", local: "Paço Municipal", suprimento: "Toner Samsung MLT-D111S", situacao: "Crítico", dias: 5 },
-  { secretaria: "Educação", local: "CMEI Pequeno Príncipe", suprimento: "Cilindro Brother DR-1060", situacao: "Sem estoque", dias: 0 },
-  { secretaria: "Assistência Social", local: "CRAS I", suprimento: "Toner HP CF217A", situacao: "Crítico", dias: 4 },
-  { secretaria: "Saúde", local: "UBS Bela Vista", suprimento: "Toner Lexmark 50F4H00", situacao: "Sem estoque", dias: 0 },
-  { secretaria: "Obras", local: "Secretaria de Obras", suprimento: "Toner HP CF230A", situacao: "Crítico", dias: 2 },
-];
+export const resumo: Resumo = new Proxy({} as Resumo, {
+  get(_t, prop: keyof Resumo) {
+    switch (prop) {
+      case "impressoras":
+        return impressoras.length;
+      case "estoqueUnidades":
+        return estoque.reduce((s, e) => s + e.quantidade, 0);
+      case "valorEstoque":
+        return estoque.reduce((s, e) => s + e.quantidade * e.valorUnit, 0);
+      case "itensCriticos":
+        return estoque.filter((e) => e.quantidade === 0).length;
+      case "estoqueBaixo":
+        return estoque.filter((e) => e.quantidade > 0 && e.quantidade <= 2).length;
+    }
+  },
+}) as Resumo;
+
+type AlertaCritico = {
+  secretaria: string;
+  local: string;
+  suprimento: string;
+  situacao: "Sem estoque" | "Crítico";
+  dias: number;
+};
+
+export const alertasCriticos: AlertaCritico[] = new Proxy([] as AlertaCritico[], {
+  get(_t, prop) {
+    const isToner = (e: (typeof estoque)[number]) =>
+      e.categoria === "Toners e Cartuchos";
+    const zerados = estoque
+      .filter((e) => isToner(e) && e.quantidade === 0)
+      .map<AlertaCritico>((e) => ({
+        secretaria: e.secretaria,
+        local: e.local,
+        suprimento: e.suprimento,
+        situacao: "Sem estoque",
+        dias: 0,
+      }));
+    const criticos = estoque
+      .filter((e) => isToner(e) && e.quantidade > 0 && e.quantidade <= 2)
+      .sort((a, b) => a.quantidade - b.quantidade)
+      .slice(0, 12)
+      .map<AlertaCritico>((e) => ({
+        secretaria: e.secretaria,
+        local: e.local,
+        suprimento: e.suprimento,
+        situacao: "Crítico",
+        dias: e.quantidade === 1 ? 3 : 7,
+      }));
+    const list = [...zerados, ...criticos];
+    return Reflect.get(list, prop);
+  },
+}) as AlertaCritico[];
 
 export const fases = [
   {
