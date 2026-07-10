@@ -679,3 +679,159 @@ export function statusImpressora(imp: Impressora): "verde" | "amarelo" | "vermel
   if (q <= 2) return "amarelo";
   return "verde";
 }
+
+// ============================================================================
+// Autonomia de Estoque
+// ----------------------------------------------------------------------------
+// Cálculo de "até quando o toner dura" a partir do estoque atual, do rendimento
+// médio de páginas por unidade de suprimento e do volume médio mensal estimado
+// por tipo de impressora. Todos os números aqui são ESTIMATIVAS de mercado —
+// ajustar quando houver contadores reais de páginas.
+// ============================================================================
+
+// Rendimento médio de páginas por unidade de suprimento (estimativa fabricante).
+const RENDIMENTO_PAGINAS: Record<string, number> = {
+  "Epson T544 Preto": 4500,
+  "Epson T664 Preto": 4000,
+  "Brother TN1060": 1000,
+  "Brother TN2370": 2600,
+  "Brother TN3472": 3000,
+  "Brother TN3492": 3000,
+  "HP CB435A": 1500,
+  "HP 17A": 1600,
+  "HP 78A": 2100,
+  "HP 83A": 1500,
+  "HP 85A": 1600,
+  "HP 258X": 10000,
+  "HP 410A Preto": 2300,
+  "Samsung D101": 1500,
+  "Samsung D104S": 1500,
+  "Samsung D111L": 1800,
+  "Samsung D203U": 15000,
+  "Samsung D208L": 10000,
+  "Samsung D201L": 4000,
+  "Samsung D205L": 5000,
+  "Pantum PB211EV": 1600,
+  "Pantum TL411X": 6000,
+  "Lexmark 56F1H00": 15000,
+  "Ricoh SP3710X": 7000,
+  // "Kit Plotter T3170": plotter não tem rendimento padrão de mercado.
+};
+
+// Volume médio estimado de páginas/mês por tipo de impressora (repartição
+// pública de pequeno/médio porte). Ajustar depois com dados reais.
+const VOLUME_MENSAL_ESTIMADO: Record<TipoImpressora, number | null> = {
+  "Jato de Tinta": 300,
+  "Laser PB": 600,
+  "Laser Colorido": 400,
+  "Plotter": null,
+};
+
+export type AutonomiaStatus = "critico" | "atencao" | "ok" | "sem_consumo";
+
+export interface AutonomiaToner {
+  toner: string;
+  estoqueUnidades: number;
+  rendimentoPaginas: number;
+  paginasDisponiveis: number;
+  impressorasCount: number;
+  consumoMensalPaginas: number;
+  mesesRestantes: number;
+  diasRestantes: number;
+  status: AutonomiaStatus;
+}
+
+export interface AutonomiaLocal {
+  secretaria: string;
+  local: string;
+  impressorasCount: number;
+  tonerCritico: string | null;
+  mesesRestantes: number;
+  diasRestantes: number;
+  status: AutonomiaStatus;
+}
+
+function statusDe(meses: number, consumo: number): AutonomiaStatus {
+  if (consumo <= 0) return "sem_consumo";
+  if (meses < 1) return "critico";
+  if (meses < 2) return "atencao";
+  return "ok";
+}
+
+function calcPorToner(): AutonomiaToner[] {
+  const rows: AutonomiaToner[] = Object.entries(RENDIMENTO_PAGINAS).map(
+    ([toner, rendimento]) => {
+      const un = estoqueAtual[toner] ?? 0;
+      const imps = impressoras.filter((i) => i.toner === toner);
+      const consumo = imps.reduce((s, i) => {
+        const v = VOLUME_MENSAL_ESTIMADO[i.tipo];
+        return s + (v ?? 0);
+      }, 0);
+      const paginas = un * rendimento;
+      const meses = consumo > 0 ? paginas / consumo : Infinity;
+      return {
+        toner,
+        estoqueUnidades: un,
+        rendimentoPaginas: rendimento,
+        paginasDisponiveis: paginas,
+        impressorasCount: imps.length,
+        consumoMensalPaginas: consumo,
+        mesesRestantes: meses,
+        diasRestantes: meses === Infinity ? Infinity : meses * 30,
+        status: statusDe(meses, consumo),
+      };
+    }
+  );
+  const rank = (s: AutonomiaStatus) =>
+    s === "critico" ? 0 : s === "atencao" ? 1 : s === "ok" ? 2 : 3;
+  return rows.sort(
+    (a, b) => rank(a.status) - rank(b.status) || a.mesesRestantes - b.mesesRestantes
+  );
+}
+
+function calcPorLocais(porToner: AutonomiaToner[]): AutonomiaLocal[] {
+  const tonerMap = new Map(porToner.map((t) => [t.toner, t]));
+  const groups = new Map<string, Impressora[]>();
+  for (const imp of impressoras) {
+    const k = `${imp.secretaria}||${imp.local}`;
+    const arr = groups.get(k) ?? [];
+    arr.push(imp);
+    groups.set(k, arr);
+  }
+  const rows: AutonomiaLocal[] = [];
+  for (const [k, imps] of groups) {
+    const [secretaria, local] = k.split("||");
+    let pior: AutonomiaToner | null = null;
+    for (const imp of imps) {
+      const t = tonerMap.get(imp.toner);
+      if (!t) continue;
+      if (!pior || t.mesesRestantes < pior.mesesRestantes) pior = t;
+    }
+    rows.push({
+      secretaria,
+      local,
+      impressorasCount: imps.length,
+      tonerCritico: pior?.toner ?? null,
+      mesesRestantes: pior?.mesesRestantes ?? Infinity,
+      diasRestantes: pior?.diasRestantes ?? Infinity,
+      status: pior?.status ?? "sem_consumo",
+    });
+  }
+  const rank = (s: AutonomiaStatus) =>
+    s === "critico" ? 0 : s === "atencao" ? 1 : s === "ok" ? 2 : 3;
+  return rows.sort(
+    (a, b) => rank(a.status) - rank(b.status) || a.mesesRestantes - b.mesesRestantes
+  );
+}
+
+export const autonomiaEstoque = new Proxy(
+  {} as { porToner: AutonomiaToner[]; porLocais: AutonomiaLocal[] },
+  {
+    get(_t, prop) {
+      const porToner = calcPorToner();
+      if (prop === "porToner") return porToner;
+      if (prop === "porLocais") return calcPorLocais(porToner);
+      return undefined;
+    },
+  }
+);
