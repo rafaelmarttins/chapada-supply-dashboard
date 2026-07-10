@@ -802,7 +802,7 @@ function calcPorToner(): AutonomiaToner[] {
       const un = estoqueAtual[toner] ?? 0;
       const imps = impressoras.filter((i) => i.toner === toner);
       const consumo = imps.reduce((s, i) => {
-        const v = VOLUME_MENSAL_ESTIMADO[i.tipo];
+        const v = volumeMensalReal(i);
         return s + (v ?? 0);
       }, 0);
       const paginas = un * rendimento;
