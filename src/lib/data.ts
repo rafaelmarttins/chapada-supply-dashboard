@@ -359,23 +359,24 @@ const TONER_ALIASES: Record<string, string[]> = {
   "Samsung D104S": ["D104"],
   "Samsung D111L": ["D111"],
   "Samsung D203U": ["D203"],
-  "Samsung D208L": ["D208"],
+  "Samsung D208L": ["D208", "208L"],
   "Samsung D201L": ["D201"],
-  "Samsung D205L": ["D205"],
+  "Samsung D205L": ["D205", "205E"],
   "Pantum PB211EV": ["PB211", "PA210"],
-  "Pantum TL411X": ["TL411", "TL-411"],
+  "Pantum TL411X": ["TL411", "TL-411", "411X"],
   "Lexmark 56F0Z00": ["56F0", "LEXMARK MX"],
   "Ricoh SP3710X": ["SP3710", "RICOH"],
   "Kit Plotter T3170": ["T3170", "PLOTTER"],
 };
 
+const norm = (s: string) =>
+  s.toUpperCase().replace(/·/g, " ").replace(/\s+/g, " ").trim();
+
 export const estoqueAtual: Record<string, number> = Object.fromEntries(
   Object.entries(TONER_ALIASES).map(([key, aliases]) => [
     key,
     estoque
-      .filter((e) =>
-        aliases.some((a) => e.suprimento.toUpperCase().includes(a.toUpperCase()))
-      )
+      .filter((e) => aliases.some((a) => norm(e.suprimento).includes(norm(a))))
       .reduce((sum, e) => sum + e.quantidade, 0),
   ])
 );
