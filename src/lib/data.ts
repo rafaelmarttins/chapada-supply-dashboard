@@ -364,7 +364,13 @@ const TONER_ALIASES: Record<string, string[]> = {
   "Samsung D205L": ["D205", "205E"],
   "Pantum PB211EV": ["PB211", "PA210"],
   "Pantum TL411X": ["TL411", "TL-411", "411X"],
-  "Lexmark 56F0Z00": ["56F0", "LEXMARK MX"],
+  // Toner genuíno da família Lexmark MX421/MX521/MX622 (56F1000 rendimento
+  // padrão, 56F1H00 alta capacidade ~15k pág., 56F1X00 extra alta ~20k pág.).
+  "Lexmark 56F1H00": ["56F1000", "56F1H00", "56F1X00"],
+  // ATENÇÃO: "56F0Z00" NÃO é toner — é a Unidade de Imagem (cilindro/fotocondutor)
+  // da linha Lexmark MX, com troca bem mais rara (~60.000 páginas). Mantido aqui
+  // apenas para não deixar o item do estoque órfão do mapeamento.
+  "Lexmark 56F0Z00 (Unidade de Imagem)": ["56F0Z"],
   "Ricoh SP3710X": ["SP3710", "RICOH"],
   "Kit Plotter T3170": ["T3170", "PLOTTER"],
 };
@@ -410,7 +416,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Brother 6902W", tipo: "Laser PB", toner: "Brother TN3492" },
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Epson L5290", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "SLM-4070 USB", tipo: "Laser PB", toner: "Samsung D208L" },
-  { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "HP ML-2165 USB", tipo: "Laser PB", toner: "Samsung D101" },
+  { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Samsung ML-2165 USB", tipo: "Laser PB", toner: "Samsung D101" },
   { secretaria: "SEFIP", local: "Contabilidade", modelo: "Brother DCP-5652DN", tipo: "Laser PB", toner: "Brother TN3472" },
   { secretaria: "SEFIP", local: "Contabilidade", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEINFRA", local: "SEINFRA/DEMUTRAN", modelo: "Epson L575", tipo: "Jato de Tinta", toner: "Epson T664 Preto" },
@@ -451,7 +457,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SMS", local: "CEM - Sala de Gesso", modelo: "HP 1102", tipo: "Laser PB", toner: "HP 17A" },
   { secretaria: "SMS", local: "CEM - Raio X", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Saúde Mulher Recepção", modelo: "HP M127", tipo: "Laser PB", toner: "HP 83A" },
-  { secretaria: "SMS", local: "CEM - Saúde Mulher Coord. Enfermagem", modelo: "HP 2165", tipo: "Laser PB", toner: "Samsung D101" },
+  { secretaria: "SMS", local: "CEM - Saúde Mulher Coord. Enfermagem", modelo: "Samsung ML-2165", tipo: "Laser PB", toner: "Samsung D101" },
   { secretaria: "SMS", local: "CEM - Saúde Mulher Consultórios (x5)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Saúde Mulher Consultórios (x5)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Saúde Mulher Consultórios (x5)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
@@ -660,7 +666,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SESOP", local: "Pátio de Obras - COP", modelo: "Brother L6912", tipo: "Laser PB", toner: "Brother TN3492" },
   { secretaria: "SESOP", local: "Pátio de Obras - GFCC", modelo: "Samsung 5835", tipo: "Laser PB", toner: "Samsung D208L" },
   { secretaria: "SESOP", local: "Pátio de Obras - Oficina", modelo: "Samsung M4070", tipo: "Laser PB", toner: "Samsung D203U" },
-  { secretaria: "SEDEMA", local: "CANIL", modelo: "Lexmark MX421", tipo: "Laser PB", toner: "Lexmark 56F0Z00" },
+  { secretaria: "SEDEMA", local: "CANIL", modelo: "Lexmark MX421", tipo: "Laser PB", toner: "Lexmark 56F1H00" },
   { secretaria: "SEDEMA", local: "CTR", modelo: "Brother 5652", tipo: "Laser PB", toner: "Brother TN3472" },
   { secretaria: "SEDEMA", local: "AGIPEQ/SEDEMA", modelo: "Epson L3250", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEDEMA", local: "SEDEMA", modelo: "Brother 6902W", tipo: "Laser PB", toner: "Brother TN3492" },
@@ -673,3 +679,159 @@ export function statusImpressora(imp: Impressora): "verde" | "amarelo" | "vermel
   if (q <= 2) return "amarelo";
   return "verde";
 }
+
+// ============================================================================
+// Autonomia de Estoque
+// ----------------------------------------------------------------------------
+// Cálculo de "até quando o toner dura" a partir do estoque atual, do rendimento
+// médio de páginas por unidade de suprimento e do volume médio mensal estimado
+// por tipo de impressora. Todos os números aqui são ESTIMATIVAS de mercado —
+// ajustar quando houver contadores reais de páginas.
+// ============================================================================
+
+// Rendimento médio de páginas por unidade de suprimento (estimativa fabricante).
+const RENDIMENTO_PAGINAS: Record<string, number> = {
+  "Epson T544 Preto": 4500,
+  "Epson T664 Preto": 4000,
+  "Brother TN1060": 1000,
+  "Brother TN2370": 2600,
+  "Brother TN3472": 3000,
+  "Brother TN3492": 3000,
+  "HP CB435A": 1500,
+  "HP 17A": 1600,
+  "HP 78A": 2100,
+  "HP 83A": 1500,
+  "HP 85A": 1600,
+  "HP 258X": 10000,
+  "HP 410A Preto": 2300,
+  "Samsung D101": 1500,
+  "Samsung D104S": 1500,
+  "Samsung D111L": 1800,
+  "Samsung D203U": 15000,
+  "Samsung D208L": 10000,
+  "Samsung D201L": 4000,
+  "Samsung D205L": 5000,
+  "Pantum PB211EV": 1600,
+  "Pantum TL411X": 6000,
+  "Lexmark 56F1H00": 15000,
+  "Ricoh SP3710X": 7000,
+  // "Kit Plotter T3170": plotter não tem rendimento padrão de mercado.
+};
+
+// Volume médio estimado de páginas/mês por tipo de impressora (repartição
+// pública de pequeno/médio porte). Ajustar depois com dados reais.
+const VOLUME_MENSAL_ESTIMADO: Record<TipoImpressora, number | null> = {
+  "Jato de Tinta": 300,
+  "Laser PB": 600,
+  "Laser Colorido": 400,
+  "Plotter": null,
+};
+
+export type AutonomiaStatus = "critico" | "atencao" | "ok" | "sem_consumo";
+
+export interface AutonomiaToner {
+  toner: string;
+  estoqueUnidades: number;
+  rendimentoPaginas: number;
+  paginasDisponiveis: number;
+  impressorasCount: number;
+  consumoMensalPaginas: number;
+  mesesRestantes: number;
+  diasRestantes: number;
+  status: AutonomiaStatus;
+}
+
+export interface AutonomiaLocal {
+  secretaria: string;
+  local: string;
+  impressorasCount: number;
+  tonerCritico: string | null;
+  mesesRestantes: number;
+  diasRestantes: number;
+  status: AutonomiaStatus;
+}
+
+function statusDe(meses: number, consumo: number): AutonomiaStatus {
+  if (consumo <= 0) return "sem_consumo";
+  if (meses < 1) return "critico";
+  if (meses < 2) return "atencao";
+  return "ok";
+}
+
+function calcPorToner(): AutonomiaToner[] {
+  const rows: AutonomiaToner[] = Object.entries(RENDIMENTO_PAGINAS).map(
+    ([toner, rendimento]) => {
+      const un = estoqueAtual[toner] ?? 0;
+      const imps = impressoras.filter((i) => i.toner === toner);
+      const consumo = imps.reduce((s, i) => {
+        const v = VOLUME_MENSAL_ESTIMADO[i.tipo];
+        return s + (v ?? 0);
+      }, 0);
+      const paginas = un * rendimento;
+      const meses = consumo > 0 ? paginas / consumo : Infinity;
+      return {
+        toner,
+        estoqueUnidades: un,
+        rendimentoPaginas: rendimento,
+        paginasDisponiveis: paginas,
+        impressorasCount: imps.length,
+        consumoMensalPaginas: consumo,
+        mesesRestantes: meses,
+        diasRestantes: meses === Infinity ? Infinity : meses * 30,
+        status: statusDe(meses, consumo),
+      };
+    }
+  );
+  const rank = (s: AutonomiaStatus) =>
+    s === "critico" ? 0 : s === "atencao" ? 1 : s === "ok" ? 2 : 3;
+  return rows.sort(
+    (a, b) => rank(a.status) - rank(b.status) || a.mesesRestantes - b.mesesRestantes
+  );
+}
+
+function calcPorLocais(porToner: AutonomiaToner[]): AutonomiaLocal[] {
+  const tonerMap = new Map(porToner.map((t) => [t.toner, t]));
+  const groups = new Map<string, Impressora[]>();
+  for (const imp of impressoras) {
+    const k = `${imp.secretaria}||${imp.local}`;
+    const arr = groups.get(k) ?? [];
+    arr.push(imp);
+    groups.set(k, arr);
+  }
+  const rows: AutonomiaLocal[] = [];
+  for (const [k, imps] of groups) {
+    const [secretaria, local] = k.split("||");
+    let pior: AutonomiaToner | null = null;
+    for (const imp of imps) {
+      const t = tonerMap.get(imp.toner);
+      if (!t) continue;
+      if (!pior || t.mesesRestantes < pior.mesesRestantes) pior = t;
+    }
+    rows.push({
+      secretaria,
+      local,
+      impressorasCount: imps.length,
+      tonerCritico: pior?.toner ?? null,
+      mesesRestantes: pior?.mesesRestantes ?? Infinity,
+      diasRestantes: pior?.diasRestantes ?? Infinity,
+      status: pior?.status ?? "sem_consumo",
+    });
+  }
+  const rank = (s: AutonomiaStatus) =>
+    s === "critico" ? 0 : s === "atencao" ? 1 : s === "ok" ? 2 : 3;
+  return rows.sort(
+    (a, b) => rank(a.status) - rank(b.status) || a.mesesRestantes - b.mesesRestantes
+  );
+}
+
+export const autonomiaEstoque = new Proxy(
+  {} as { porToner: AutonomiaToner[]; porLocais: AutonomiaLocal[] },
+  {
+    get(_t, prop) {
+      const porToner = calcPorToner();
+      if (prop === "porToner") return porToner;
+      if (prop === "porLocais") return calcPorLocais(porToner);
+      return undefined;
+    },
+  }
+);
