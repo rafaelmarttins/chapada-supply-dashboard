@@ -342,7 +342,128 @@ function Cenarios() {
         </CardContent>
       </Card>
 
+      {/* Alocação Manual de Estoque */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Alocação Manual de Estoque</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Para cada toner cujo estoque não cobre todas as impressoras que o
+            usam, escolha manualmente quais impressoras vão receber unidade
+            nessa rodada. O sistema impede alocar mais do que existe em
+            estoque.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {tonersEscassos.length === 0 ? (
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-success/10 border border-success/30 text-success">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">
+                Todos os toners têm estoque suficiente para pelo menos uma
+                unidade por impressora — nenhuma escolha manual necessária.
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                <strong>{tonersEscassos.length}</strong> toner(s) com estoque
+                insuficiente para todas as impressoras que usam —{" "}
+                <strong className="text-destructive">
+                  {naoAtendidasTotal}
+                </strong>{" "}
+                impressora(s) não vão receber toner nessa rodada.
+              </div>
+
+              {tonersEscassos.map((t) => {
+                const marcadas = alocacao[t.toner] ?? [];
+                const cheio = marcadas.length >= t.estoque;
+                return (
+                  <div
+                    key={t.toner}
+                    className="rounded-lg border border-border overflow-hidden"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-muted/40 px-4 py-3 border-b border-border">
+                      <div>
+                        <div className="font-semibold text-foreground">
+                          {t.toner}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {t.estoque} unidade(s) em estoque para{" "}
+                          {t.printers.length} impressoras
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={
+                            cheio
+                              ? "bg-success/15 text-success border border-success/30 hover:bg-success/15"
+                              : "bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20"
+                          }
+                        >
+                          {marcadas.length} de {t.estoque} unidades alocadas
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            sugerirAloc(t.toner, t.printers, t.estoque)
+                          }
+                        >
+                          Sugerir automaticamente
+                        </Button>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-border">
+                      {t.printers.map((p) => {
+                        const checked = marcadas.includes(p.idx);
+                        const disabled = !checked && cheio;
+                        return (
+                          <li
+                            key={p.idx}
+                            className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
+                              disabled ? "opacity-50" : ""
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="font-medium text-foreground">
+                                {p.secretaria}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                — {p.local}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                · {p.modelo}
+                              </span>
+                            </div>
+                            <label
+                              className={`flex items-center gap-2 text-xs ${
+                                disabled ? "cursor-not-allowed" : "cursor-pointer"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={checked}
+                                disabled={disabled}
+                                onCheckedChange={() =>
+                                  toggleAloc(t.toner, p.idx, t.estoque)
+                                }
+                              />
+                              Alocar aqui
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Detalhes técnicos */}
+
       <Collapsible defaultOpen={false}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full">
