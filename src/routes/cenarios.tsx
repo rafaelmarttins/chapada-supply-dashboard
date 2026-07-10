@@ -153,6 +153,73 @@ function Cenarios() {
     });
   }, [naoAtendidos, parciais]);
 
+  // ============= Alocação Manual de Estoque =============
+  const tonersEscassos = useMemo(() => {
+    const byToner = new Map<string, number[]>();
+    impressoras.forEach((imp, idx) => {
+      const arr = byToner.get(imp.toner) ?? [];
+      arr.push(idx);
+      byToner.set(imp.toner, arr);
+    });
+    const list: {
+      toner: string;
+      estoque: number;
+      printers: {
+        idx: number;
+        secretaria: string;
+        local: string;
+        modelo: string;
+      }[];
+    }[] = [];
+    byToner.forEach((idxs, toner) => {
+      const est = estoqueAtual[toner] ?? 0;
+      if (est < idxs.length) {
+        list.push({
+          toner,
+          estoque: est,
+          printers: idxs.map((i) => ({
+            idx: i,
+            secretaria: impressoras[i].secretaria,
+            local: impressoras[i].local,
+            modelo: impressoras[i].modelo,
+          })),
+        });
+      }
+    });
+    return list.sort((a, b) => a.estoque - b.estoque);
+  }, []);
+
+  const [alocacao, setAlocacao] = useState<Record<string, number[]>>({});
+
+  const toggleAloc = (toner: string, idx: number, estoque: number) => {
+    setAlocacao((prev) => {
+      const cur = prev[toner] ?? [];
+      if (cur.includes(idx)) {
+        return { ...prev, [toner]: cur.filter((i) => i !== idx) };
+      }
+      if (cur.length >= estoque) return prev;
+      return { ...prev, [toner]: [...cur, idx] };
+    });
+  };
+
+  const sugerirAloc = (
+    toner: string,
+    printers: { idx: number; secretaria: string }[],
+    estoque: number,
+  ) => {
+    const isPrio = (s: string) => s === "SMS" || s === "SEMEC";
+    const prio = printers.filter((p) => isPrio(p.secretaria));
+    const others = printers.filter((p) => !isPrio(p.secretaria));
+    const chosen = [...prio, ...others].slice(0, estoque).map((p) => p.idx);
+    setAlocacao((prev) => ({ ...prev, [toner]: chosen }));
+  };
+
+  const naoAtendidasTotal = tonersEscassos.reduce((sum, t) => {
+    const alocadas = (alocacao[t.toner] ?? []).length;
+    return sum + (t.printers.length - alocadas);
+  }, 0);
+
+
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Topo */}
