@@ -5,11 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -31,7 +27,6 @@ import {
   AlertCircle,
   XCircle,
   MinusCircle,
-  ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/cenarios")({
@@ -41,25 +36,25 @@ export const Route = createFileRoute("/cenarios")({
 function StatusBadge({ status }: { status: AutonomiaStatus }) {
   if (status === "critico")
     return (
-      <Badge variant="destructive">
+      <Badge variant="destructive" className="text-xs">
         <XCircle className="h-3 w-3 mr-1" /> Crítico
       </Badge>
     );
   if (status === "atencao")
     return (
-      <Badge className="bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20">
+      <Badge className="bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20 text-xs">
         <AlertCircle className="h-3 w-3 mr-1" /> Atenção
       </Badge>
     );
   if (status === "ok")
     return (
-      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
+      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15 text-xs">
         <CheckCircle2 className="h-3 w-3 mr-1" /> OK
       </Badge>
     );
   return (
-    <Badge variant="secondary">
-      <MinusCircle className="h-3 w-3 mr-1" /> Sem consumo estimado
+    <Badge variant="secondary" className="text-xs">
+      <MinusCircle className="h-3 w-3 mr-1" /> S/consumo
     </Badge>
   );
 }
@@ -67,24 +62,24 @@ function StatusBadge({ status }: { status: AutonomiaStatus }) {
 function SituacaoBadge({ situacao }: { situacao: CoberturaLocal["situacao"] }) {
   if (situacao === "atendido")
     return (
-      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15">
+      <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/15 text-xs">
         <CheckCircle2 className="h-3 w-3 mr-1" /> Atendido
       </Badge>
     );
   if (situacao === "parcial")
     return (
-      <Badge className="bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20">
+      <Badge className="bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20 text-xs">
         <AlertCircle className="h-3 w-3 mr-1" /> Parcial
       </Badge>
     );
   if (situacao === "nao_atendido")
     return (
-      <Badge variant="destructive">
+      <Badge variant="destructive" className="text-xs">
         <XCircle className="h-3 w-3 mr-1" /> Não atendido
       </Badge>
     );
   return (
-    <Badge variant="secondary">
+    <Badge variant="secondary" className="text-xs">
       <MinusCircle className="h-3 w-3 mr-1" /> Sem dado
     </Badge>
   );
@@ -106,35 +101,44 @@ function nomeSecretarias(lista: string[]) {
   return `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}`;
 }
 
-function Cenarios() {
-  const { porToner, porLocais } = autonomiaEstoque;
+type Sim = ReturnType<typeof simularPriorizacao>;
 
-  const resumo = useMemo(() => {
-    const count = (arr: { status: AutonomiaStatus }[]) => ({
-      critico: arr.filter((x) => x.status === "critico").length,
-      atencao: arr.filter((x) => x.status === "atencao").length,
-      ok: arr.filter((x) => x.status === "ok").length,
-      sem: arr.filter((x) => x.status === "sem_consumo").length,
-    });
-    return { toners: count(porToner), locais: count(porLocais) };
-  }, [porToner, porLocais]);
-
-  // ============= Simulador =============
-  const secretariasDisponiveis = useMemo(
-    () => Array.from(new Set(impressoras.map((i) => i.secretaria))).sort(),
-    [],
+function SecretariaChips({
+  secretarias,
+  prioritarias,
+  onToggle,
+}: {
+  secretarias: string[];
+  prioritarias: string[];
+  onToggle: (s: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {secretarias.map((s) => {
+        const checked = prioritarias.includes(s);
+        return (
+          <label
+            key={s}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium cursor-pointer transition-colors ${
+              checked
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card hover:bg-accent"
+            }`}
+          >
+            <Checkbox
+              checked={checked}
+              onCheckedChange={() => onToggle(s)}
+              className={`h-3.5 w-3.5 ${checked ? "border-primary-foreground" : ""}`}
+            />
+            {s}
+          </label>
+        );
+      })}
+    </div>
   );
-  const [prioritarias, setPrioritarias] = useState<string[]>(() =>
-    secretariasDisponiveis.filter((s) => s === "SMS" || s === "SEMEC"),
-  );
-  const sim = useMemo(() => simularPriorizacao(prioritarias), [prioritarias]);
+}
 
-  const togglePrio = (s: string) =>
-    setPrioritarias((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
-    );
-
-  // ============= Resumo executivo =============
+function TabResumo({ prioritarias, sim }: { prioritarias: string[]; sim: Sim }) {
   const locaisPrioritarios = sim.porLocal.filter((l) => l.prioridade);
   const atendidos = locaisPrioritarios.filter((l) => l.situacao === "atendido");
   const parciais = locaisPrioritarios.filter((l) => l.situacao === "parcial");
@@ -146,14 +150,253 @@ function Cenarios() {
       ? 0
       : Math.round((atendidos.length / locaisPrioritarios.length) * 100);
 
-  const locaisComProblema = useMemo(() => {
-    return [...naoAtendidos, ...parciais].sort((a, b) => {
-      if (a.situacao === b.situacao) return 0;
-      return a.situacao === "nao_atendido" ? -1 : 1;
-    });
-  }, [naoAtendidos, parciais]);
+  const locaisComProblema = [...naoAtendidos, ...parciais].sort((a, b) =>
+    a.situacao === b.situacao ? 0 : a.situacao === "nao_atendido" ? -1 : 1,
+  );
 
-  // ============= Alocação Manual de Estoque =============
+  return (
+    <div className="space-y-3">
+      <Card className="border-2 border-primary/20">
+        <CardContent className="p-4 sm:p-6 text-center space-y-3">
+          <div className="text-4xl sm:text-5xl font-extrabold text-primary">
+            {pctAtendidos}%
+          </div>
+          <p className="text-sm sm:text-base text-foreground max-w-2xl mx-auto">
+            <strong>{atendidos.length}</strong> de{" "}
+            <strong>{locaisPrioritarios.length}</strong> locais de{" "}
+            <strong>{nomeSecretarias(prioritarias)}</strong> têm toner
+            suficiente pra imprimir o mês inteiro.
+          </p>
+          <div className="max-w-xl mx-auto">
+            <Progress value={pctAtendidos} className="h-3" />
+          </div>
+          <div className="flex justify-center gap-6 pt-1">
+            <div className="text-center">
+              <div className="text-xl font-bold text-success">
+                {atendidos.length}
+              </div>
+              <div className="text-[10px] uppercase text-muted-foreground">
+                Atendidos
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl font-bold text-warning">
+                {parciais.length}
+              </div>
+              <div className="text-[10px] uppercase text-muted-foreground">
+                Parcial
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl font-bold text-destructive">
+                {naoAtendidos.length}
+              </div>
+              <div className="text-[10px] uppercase text-muted-foreground">
+                Sem toner
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">
+            O que fica sem toner este mês
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          {locaisComProblema.length === 0 ? (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/30 text-success text-xs">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="font-medium">
+                Nenhum local ficará sem toner este mês com a seleção atual.
+              </span>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {locaisComProblema.map((l, i) => (
+                <li
+                  key={i}
+                  className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
+                >
+                  <div className="text-xs sm:text-sm">
+                    <span className="font-semibold text-foreground">
+                      {l.secretaria}
+                    </span>
+                    <span className="text-muted-foreground"> — {l.local}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <SituacaoBadge situacao={l.situacao} />
+                    {l.tonerCritico && (
+                      <span className="text-muted-foreground">
+                        sem {l.tonerCritico}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TabPriorizacao({
+  secretariasDisponiveis,
+  prioritarias,
+  togglePrio,
+  sim,
+}: {
+  secretariasDisponiveis: string[];
+  prioritarias: string[];
+  togglePrio: (s: string) => void;
+  sim: Sim;
+}) {
+  return (
+    <div className="space-y-3">
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">Secretarias prioritárias</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Marque as que recebem o estoque primeiro. O restante fica com a
+            sobra.
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <SecretariaChips
+            secretarias={secretariasDisponiveis}
+            prioritarias={prioritarias}
+            onToggle={togglePrio}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">
+            Cobertura por Toner (alocação simulada)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-xs">Toner</TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Estoque
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Nec. prio.
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Cob. prio.
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Nec. rest.
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Cob. rest.
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sim.porToner.map((t) => (
+                <TableRow key={t.toner}>
+                  <TableCell className="py-1.5 text-xs font-medium">
+                    {t.toner}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {t.estoqueUnidades}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {t.necessidadePrioridade.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`py-1.5 text-xs text-right ${coberturaClasse(
+                      t.coberturaPrioridade,
+                    )}`}
+                  >
+                    {t.necessidadePrioridade === 0
+                      ? "—"
+                      : fmtPct(t.coberturaPrioridade)}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {t.necessidadeRestante.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`py-1.5 text-xs text-right ${coberturaClasse(
+                      t.coberturaRestante,
+                    )}`}
+                  >
+                    {t.necessidadeRestante === 0
+                      ? "—"
+                      : fmtPct(t.coberturaRestante)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">
+            Situação por Local (com priorização)
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Não atendidos e parciais aparecem primeiro.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-xs">Secretaria</TableHead>
+                <TableHead className="h-8 text-xs">Local</TableHead>
+                <TableHead className="h-8 text-xs">Prio.?</TableHead>
+                <TableHead className="h-8 text-xs">Toner crítico</TableHead>
+                <TableHead className="h-8 text-xs">Situação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sim.porLocal.map((l, i) => (
+                <TableRow key={i}>
+                  <TableCell className="py-1.5 text-xs font-medium">
+                    {l.secretaria}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs">{l.local}</TableCell>
+                  <TableCell className="py-1.5 text-xs">
+                    {l.prioridade ? (
+                      <Badge className="bg-primary/15 text-primary border border-primary/30 hover:bg-primary/15 text-xs">
+                        Sim
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        Não
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs">
+                    {l.tonerCritico ?? "—"}
+                  </TableCell>
+                  <TableCell className="py-1.5">
+                    <SituacaoBadge situacao={l.situacao} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TabAlocacao() {
   const tonersEscassos = useMemo(() => {
     const byToner = new Map<string, number[]>();
     impressoras.forEach((imp, idx) => {
@@ -219,603 +462,367 @@ function Cenarios() {
     return sum + (t.printers.length - alocadas);
   }, 0);
 
+  return (
+    <Card>
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-base">Alocação Manual de Estoque</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Para cada toner com estoque insuficiente, escolha quais impressoras
+          recebem unidade nessa rodada.
+        </p>
+      </CardHeader>
+      <CardContent className="p-4 pt-2 space-y-3">
+        {tonersEscassos.length === 0 ? (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/30 text-success text-xs">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="font-medium">
+              Todos os toners têm estoque suficiente — nenhuma escolha manual
+              necessária.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
+              <strong>{tonersEscassos.length}</strong> toner(s) com estoque
+              insuficiente —{" "}
+              <strong className="text-destructive">{naoAtendidasTotal}</strong>{" "}
+              impressora(s) não vão receber toner nessa rodada.
+            </div>
+
+            {tonersEscassos.map((t) => {
+              const marcadas = alocacao[t.toner] ?? [];
+              const cheio = marcadas.length >= t.estoque;
+              return (
+                <div
+                  key={t.toner}
+                  className="rounded-lg border border-border overflow-hidden"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-muted/40 px-3 py-2 border-b border-border">
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {t.toner}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {t.estoque} un. em estoque para {t.printers.length}{" "}
+                        impressoras
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={`text-xs ${
+                          cheio
+                            ? "bg-success/15 text-success border border-success/30 hover:bg-success/15"
+                            : "bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20"
+                        }`}
+                      >
+                        {marcadas.length}/{t.estoque} alocadas
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={() =>
+                          sugerirAloc(t.toner, t.printers, t.estoque)
+                        }
+                      >
+                        Sugerir
+                      </Button>
+                    </div>
+                  </div>
+                  <ul className="divide-y divide-border">
+                    {t.printers.map((p) => {
+                      const checked = marcadas.includes(p.idx);
+                      const disabled = !checked && cheio;
+                      return (
+                        <li
+                          key={p.idx}
+                          className={`flex items-center justify-between gap-3 px-3 py-1.5 text-xs ${
+                            disabled ? "opacity-50" : ""
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="font-medium text-foreground">
+                              {p.secretaria}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {" "}
+                              — {p.local}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {" "}
+                              · {p.modelo}
+                            </span>
+                          </div>
+                          <label
+                            className={`flex items-center gap-1.5 ${
+                              disabled ? "cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              disabled={disabled}
+                              onCheckedChange={() =>
+                                toggleAloc(t.toner, p.idx, t.estoque)
+                              }
+                              className="h-3.5 w-3.5"
+                            />
+                            Alocar
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TabDetalhes({
+  resumo,
+}: {
+  resumo: {
+    toners: { critico: number; atencao: number; ok: number; sem: number };
+    locais: { critico: number; atencao: number; ok: number; sem: number };
+  };
+}) {
+  const { porToner, porLocais } = autonomiaEstoque;
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-3">
+            <div className="text-[10px] text-muted-foreground uppercase">
+              Toners críticos (&lt;1 mês)
+            </div>
+            <div className="text-xl font-semibold text-destructive">
+              {resumo.toners.critico}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="text-[10px] text-muted-foreground uppercase">
+              Toners em atenção (1-2 meses)
+            </div>
+            <div className="text-xl font-semibold text-warning">
+              {resumo.toners.atencao}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="text-[10px] text-muted-foreground uppercase">
+              Locais críticos
+            </div>
+            <div className="text-xl font-semibold text-destructive">
+              {resumo.locais.critico}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="text-[10px] text-muted-foreground uppercase">
+              Locais em atenção
+            </div>
+            <div className="text-xl font-semibold text-warning">
+              {resumo.locais.atencao}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">Autonomia por Toner</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {porToner.length} suprimentos analisados (do mais crítico ao mais
+            folgado).
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-xs">Toner</TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Estoque
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Pág. disp.
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">Impr.</TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Cons./mês
+                </TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Autonomia
+                </TableHead>
+                <TableHead className="h-8 text-xs">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {porToner.map((t) => (
+                <TableRow key={t.toner}>
+                  <TableCell className="py-1.5 text-xs font-medium">
+                    {t.toner}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {t.estoqueUnidades}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {fmtNum(t.paginasDisponiveis)}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {t.impressorasCount}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {fmtNum(t.consumoMensalPaginas)}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {fmtDias(t.diasRestantes)}
+                  </TableCell>
+                  <TableCell className="py-1.5">
+                    <StatusBadge status={t.status} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">
+            Autonomia por Secretaria / Local
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Baseado no toner mais crítico de cada local.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-xs">Secretaria</TableHead>
+                <TableHead className="h-8 text-xs">Local</TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Nº impr.
+                </TableHead>
+                <TableHead className="h-8 text-xs">Toner crítico</TableHead>
+                <TableHead className="h-8 text-xs text-right">
+                  Autonomia
+                </TableHead>
+                <TableHead className="h-8 text-xs">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {porLocais.map((l, i) => (
+                <TableRow key={i}>
+                  <TableCell className="py-1.5 text-xs font-medium">
+                    {l.secretaria}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs">{l.local}</TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {l.impressorasCount}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs">
+                    {l.tonerCritico ?? "—"}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-right">
+                    {fmtDias(l.diasRestantes)}
+                  </TableCell>
+                  <TableCell className="py-1.5">
+                    <StatusBadge status={l.status} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function Cenarios() {
+  const { porToner, porLocais } = autonomiaEstoque;
+
+  const resumo = useMemo(() => {
+    const count = (arr: { status: AutonomiaStatus }[]) => ({
+      critico: arr.filter((x) => x.status === "critico").length,
+      atencao: arr.filter((x) => x.status === "atencao").length,
+      ok: arr.filter((x) => x.status === "ok").length,
+      sem: arr.filter((x) => x.status === "sem_consumo").length,
+    });
+    return { toners: count(porToner), locais: count(porLocais) };
+  }, [porToner, porLocais]);
+
+  const secretariasDisponiveis = useMemo(
+    () => Array.from(new Set(impressoras.map((i) => i.secretaria))).sort(),
+    [],
+  );
+  const [prioritarias, setPrioritarias] = useState<string[]>(() =>
+    secretariasDisponiveis.filter((s) => s === "SMS" || s === "SEMEC"),
+  );
+  const sim = useMemo(() => simularPriorizacao(prioritarias), [prioritarias]);
+
+  const togglePrio = (s: string) =>
+    setPrioritarias((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Topo */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+    <div className="p-4 space-y-3 max-w-5xl mx-auto">
+      <div className="text-center space-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           Com o estoque de hoje, o que conseguimos atender?
         </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
           Marque as secretarias que são prioridade. O restante fica com a sobra
-          do estoque que sobrar.
+          do estoque.
         </p>
       </div>
 
-      {/* Seleção de secretarias */}
-      <div className="flex flex-wrap justify-center gap-3">
-        {secretariasDisponiveis.map((s) => {
-          const checked = prioritarias.includes(s);
-          return (
-            <label
-              key={s}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm sm:text-base font-medium cursor-pointer transition-colors ${
-                checked
-                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                  : "border-border bg-card hover:bg-accent"
-              }`}
-            >
-              <Checkbox
-                checked={checked}
-                onCheckedChange={() => togglePrio(s)}
-                className={checked ? "border-primary-foreground" : ""}
-              />
-              {s}
-            </label>
-          );
-        })}
-      </div>
+      <Tabs defaultValue="resumo" className="w-full">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="resumo" className="text-xs sm:text-sm">
+            Resumo
+          </TabsTrigger>
+          <TabsTrigger value="priorizacao" className="text-xs sm:text-sm">
+            Priorização
+          </TabsTrigger>
+          <TabsTrigger value="alocacao" className="text-xs sm:text-sm">
+            Alocação Manual
+          </TabsTrigger>
+          <TabsTrigger value="detalhes" className="text-xs sm:text-sm">
+            Detalhes
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Resultado em destaque */}
-      <Card className="border-2 border-primary/20 shadow-lg">
-        <CardContent className="p-6 sm:p-10 text-center space-y-4">
-          <div className="text-6xl sm:text-8xl font-extrabold text-primary">
-            {pctAtendidos}%
-          </div>
-          <p className="text-lg sm:text-xl text-foreground max-w-2xl mx-auto">
-            <strong>{atendidos.length}</strong> de{" "}
-            <strong>{locaisPrioritarios.length}</strong> locais de{" "}
-            <strong>{nomeSecretarias(prioritarias)}</strong> têm toner
-            suficiente pra imprimir o mês inteiro.
-          </p>
-          <div className="max-w-xl mx-auto">
-            <Progress value={pctAtendidos} className="h-4" />
-          </div>
-          <div className="flex justify-center gap-6 sm:gap-10 pt-2">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success">
-                {atendidos.length}
-              </div>
-              <div className="text-xs uppercase text-muted-foreground">
-                Atendidos
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning">
-                {parciais.length}
-              </div>
-              <div className="text-xs uppercase text-muted-foreground">
-                Parcial
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-destructive">
-                {naoAtendidos.length}
-              </div>
-              <div className="text-xs uppercase text-muted-foreground">
-                Sem toner
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* O que fica sem toner */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">O que fica sem toner este mês</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {locaisComProblema.length === 0 ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-success/10 border border-success/30 text-success">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">
-                Nenhum local ficará sem toner este mês com a seleção atual.
-              </span>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {locaisComProblema.map((l, i) => (
-                <li
-                  key={i}
-                  className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
-                >
-                  <div>
-                    <span className="font-semibold text-foreground">
-                      {l.secretaria}
-                    </span>
-                    <span className="text-muted-foreground"> — {l.local}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <SituacaoBadge situacao={l.situacao} />
-                    {l.tonerCritico && (
-                      <span className="text-muted-foreground">
-                        sem {l.tonerCritico}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Alocação Manual de Estoque */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Alocação Manual de Estoque</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Para cada toner cujo estoque não cobre todas as impressoras que o
-            usam, escolha manualmente quais impressoras vão receber unidade
-            nessa rodada. O sistema impede alocar mais do que existe em
-            estoque.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {tonersEscassos.length === 0 ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-success/10 border border-success/30 text-success">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">
-                Todos os toners têm estoque suficiente para pelo menos uma
-                unidade por impressora — nenhuma escolha manual necessária.
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                <strong>{tonersEscassos.length}</strong> toner(s) com estoque
-                insuficiente para todas as impressoras que usam —{" "}
-                <strong className="text-destructive">
-                  {naoAtendidasTotal}
-                </strong>{" "}
-                impressora(s) não vão receber toner nessa rodada.
-              </div>
-
-              {tonersEscassos.map((t) => {
-                const marcadas = alocacao[t.toner] ?? [];
-                const cheio = marcadas.length >= t.estoque;
-                return (
-                  <div
-                    key={t.toner}
-                    className="rounded-lg border border-border overflow-hidden"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-muted/40 px-4 py-3 border-b border-border">
-                      <div>
-                        <div className="font-semibold text-foreground">
-                          {t.toner}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {t.estoque} unidade(s) em estoque para{" "}
-                          {t.printers.length} impressoras
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={
-                            cheio
-                              ? "bg-success/15 text-success border border-success/30 hover:bg-success/15"
-                              : "bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20"
-                          }
-                        >
-                          {marcadas.length} de {t.estoque} unidades alocadas
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            sugerirAloc(t.toner, t.printers, t.estoque)
-                          }
-                        >
-                          Sugerir automaticamente
-                        </Button>
-                      </div>
-                    </div>
-                    <ul className="divide-y divide-border">
-                      {t.printers.map((p) => {
-                        const checked = marcadas.includes(p.idx);
-                        const disabled = !checked && cheio;
-                        return (
-                          <li
-                            key={p.idx}
-                            className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
-                              disabled ? "opacity-50" : ""
-                            }`}
-                          >
-                            <div className="min-w-0">
-                              <span className="font-medium text-foreground">
-                                {p.secretaria}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {" "}
-                                — {p.local}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {" "}
-                                · {p.modelo}
-                              </span>
-                            </div>
-                            <label
-                              className={`flex items-center gap-2 text-xs ${
-                                disabled ? "cursor-not-allowed" : "cursor-pointer"
-                              }`}
-                            >
-                              <Checkbox
-                                checked={checked}
-                                disabled={disabled}
-                                onCheckedChange={() =>
-                                  toggleAloc(t.toner, p.idx, t.estoque)
-                                }
-                              />
-                              Alocar aqui
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Detalhes técnicos */}
-
-      <Collapsible defaultOpen={false}>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full">
-            Ver detalhes técnicos
-            <ChevronDown className="h-4 w-4 ml-2" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-5 pt-5">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase">
-                  Toners críticos (&lt;1 mês)
-                </div>
-                <div className="text-2xl font-semibold text-destructive">
-                  {resumo.toners.critico}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase">
-                  Toners em atenção (1-2 meses)
-                </div>
-                <div className="text-2xl font-semibold text-warning">
-                  {resumo.toners.atencao}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase">
-                  Locais críticos
-                </div>
-                <div className="text-2xl font-semibold text-destructive">
-                  {resumo.locais.critico}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase">
-                  Locais em atenção
-                </div>
-                <div className="text-2xl font-semibold text-warning">
-                  {resumo.locais.atencao}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Autonomia de Estoque</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Autonomia estimada com base no estoque atual, rendimento médio
-                de mercado por suprimento e volume médio de impressão por tipo
-                de impressora. Ajuste as constantes em{" "}
-                <code>src/lib/data.ts</code> ({" "}
-                <code>RENDIMENTO_PAGINAS</code>,{" "}
-                <code>VOLUME_MENSAL_ESTIMADO</code>) quando houver dados reais
-                de consumo.
-              </p>
-            </CardHeader>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Secretarias Priorizadas
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {sim.resumoPrioridade.total} locais nas secretarias marcadas.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <div className="text-2xl font-semibold text-success">
-                      {sim.resumoPrioridade.atendidos}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Atendidos
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-warning">
-                      {sim.resumoPrioridade.parciais}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Parciais
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-destructive">
-                      {sim.resumoPrioridade.naoAtendidos}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Não atendidos
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Demais Secretarias
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {sim.resumoRestante.total} locais recebem apenas a sobra do
-                  estoque.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <div className="text-2xl font-semibold text-success">
-                      {sim.resumoRestante.atendidos}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Atendidos
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-warning">
-                      {sim.resumoRestante.parciais}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Parciais
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold text-destructive">
-                      {sim.resumoRestante.naoAtendidos}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase">
-                      Não atendidos
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Autonomia por Toner</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {porToner.length} suprimentos analisados (ordenados do mais
-                crítico ao mais folgado).
-              </p>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Toner</TableHead>
-                    <TableHead className="text-right">Estoque (un.)</TableHead>
-                    <TableHead className="text-right">
-                      Páginas disponíveis
-                    </TableHead>
-                    <TableHead className="text-right">Impressoras</TableHead>
-                    <TableHead className="text-right">
-                      Consumo/mês (pág.)
-                    </TableHead>
-                    <TableHead className="text-right">Autonomia</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {porToner.map((t) => (
-                    <TableRow key={t.toner}>
-                      <TableCell className="font-medium">{t.toner}</TableCell>
-                      <TableCell className="text-right">
-                        {t.estoqueUnidades}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {fmtNum(t.paginasDisponiveis)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {t.impressorasCount}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {fmtNum(t.consumoMensalPaginas)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {fmtDias(t.diasRestantes)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={t.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Autonomia por Secretaria / Local</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Baseado no toner mais crítico de cada local (gargalo de
-                impressão).
-              </p>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Secretaria</TableHead>
-                    <TableHead>Local</TableHead>
-                    <TableHead className="text-right">Nº impressoras</TableHead>
-                    <TableHead>Toner mais crítico</TableHead>
-                    <TableHead className="text-right">Autonomia</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {porLocais.map((l, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">
-                        {l.secretaria}
-                      </TableCell>
-                      <TableCell>{l.local}</TableCell>
-                      <TableCell className="text-right">
-                        {l.impressorasCount}
-                      </TableCell>
-                      <TableCell>{l.tonerCritico ?? "—"}</TableCell>
-                      <TableCell className="text-right">
-                        {fmtDias(l.diasRestantes)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={l.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Cobertura por Toner (alocação simulada)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Toner</TableHead>
-                    <TableHead className="text-right">Estoque (un.)</TableHead>
-                    <TableHead className="text-right">
-                      Necess. prioridade (un./mês)
-                    </TableHead>
-                    <TableHead className="text-right">
-                      Cobertura prioridade
-                    </TableHead>
-                    <TableHead className="text-right">
-                      Necess. restante (un./mês)
-                    </TableHead>
-                    <TableHead className="text-right">
-                      Cobertura restante
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sim.porToner.map((t) => (
-                    <TableRow key={t.toner}>
-                      <TableCell className="font-medium">{t.toner}</TableCell>
-                      <TableCell className="text-right">
-                        {t.estoqueUnidades}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {t.necessidadePrioridade.toFixed(2)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${coberturaClasse(
-                          t.coberturaPrioridade,
-                        )}`}
-                      >
-                        {t.necessidadePrioridade === 0
-                          ? "—"
-                          : fmtPct(t.coberturaPrioridade)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {t.necessidadeRestante.toFixed(2)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${coberturaClasse(
-                          t.coberturaRestante,
-                        )}`}
-                      >
-                        {t.necessidadeRestante === 0
-                          ? "—"
-                          : fmtPct(t.coberturaRestante)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Situação por Local (com priorização)</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Locais não atendidos e parcialmente atendidos aparecem primeiro.
-              </p>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Secretaria</TableHead>
-                    <TableHead>Local</TableHead>
-                    <TableHead>Prioridade?</TableHead>
-                    <TableHead>Toner mais crítico</TableHead>
-                    <TableHead>Situação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sim.porLocal.map((l, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">
-                        {l.secretaria}
-                      </TableCell>
-                      <TableCell>{l.local}</TableCell>
-                      <TableCell>
-                        {l.prioridade ? (
-                          <Badge className="bg-primary/15 text-primary border border-primary/30 hover:bg-primary/15">
-                            Sim
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">Não</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{l.tonerCritico ?? "—"}</TableCell>
-                      <TableCell>
-                        <SituacaoBadge situacao={l.situacao} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
-      </Collapsible>
+        <TabsContent value="resumo" className="mt-3">
+          <TabResumo prioritarias={prioritarias} sim={sim} />
+        </TabsContent>
+        <TabsContent value="priorizacao" className="mt-3">
+          <TabPriorizacao
+            secretariasDisponiveis={secretariasDisponiveis}
+            prioritarias={prioritarias}
+            togglePrio={togglePrio}
+            sim={sim}
+          />
+        </TabsContent>
+        <TabsContent value="alocacao" className="mt-3">
+          <TabAlocacao />
+        </TabsContent>
+        <TabsContent value="detalhes" className="mt-3">
+          <TabDetalhes resumo={resumo} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
