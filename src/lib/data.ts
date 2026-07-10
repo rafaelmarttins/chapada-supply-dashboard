@@ -727,6 +727,44 @@ export const VOLUME_MENSAL_ESTIMADO: Record<TipoImpressora, number | null> = {
   "Plotter": null,
 };
 
+// Locais de SMS que são atendimento clínico direto (postos de saúde, UBS, ESF,
+// CEM, CAPS etc.) — excluímos só os administrativos da própria secretaria.
+function isClinicoSaude(imp: Impressora): boolean {
+  if (imp.secretaria !== "SMS") return false;
+  if (imp.local.startsWith("Paço Municipal")) return false;
+  if (imp.local.startsWith("Prático/Transporte")) return false;
+  return true;
+}
+
+// Volume mensal com ajuste por observação real de campo. Onde não há dado
+// real, usa o volume genérico de VOLUME_MENSAL_ESTIMADO como antes.
+export function volumeMensalReal(imp: Impressora): number | null {
+  const base = VOLUME_MENSAL_ESTIMADO[imp.tipo];
+  if (base === null) return null; // ex: Plotter, sem volume padrão
+
+  if (isClinicoSaude(imp)) {
+    // ÂNCORA REAL: nos consultórios/postos de saúde o tanque de tinta do
+    // Epson EcoTank (T544/T664) é recarregado por completo a cada ~7 dias
+    // (relato direto do responsável pelo estoque, não é estimativa).
+    if (imp.tipo === "Jato de Tinta") {
+      const rendimento = RENDIMENTO_PAGINAS[imp.toner];
+      if (rendimento) return rendimento * (30 / 7);
+    }
+    // Impressoras a laser em postos de saúde: sem dado real ainda, aplicar
+    // um fator de correção conservador até termos números de campo (AJUSTAR).
+    return base * 3;
+  }
+
+  if (imp.secretaria === "SEMEC") {
+    // Escolas imprimem mais que uma secretaria administrativa comum, mas
+    // ainda não temos número real de campo — fator provisório (AJUSTAR
+    // quando houver dado real de alguma escola específica).
+    return base * 2;
+  }
+
+  return base;
+}
+
 export type AutonomiaStatus = "critico" | "atencao" | "ok" | "sem_consumo";
 
 export interface AutonomiaToner {
