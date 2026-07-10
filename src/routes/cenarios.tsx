@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import {
   autonomiaEstoque,
+  estoqueAtual,
   impressoras,
   simularPriorizacao,
   type AutonomiaStatus,
@@ -152,6 +153,73 @@ function Cenarios() {
     });
   }, [naoAtendidos, parciais]);
 
+  // ============= Alocação Manual de Estoque =============
+  const tonersEscassos = useMemo(() => {
+    const byToner = new Map<string, number[]>();
+    impressoras.forEach((imp, idx) => {
+      const arr = byToner.get(imp.toner) ?? [];
+      arr.push(idx);
+      byToner.set(imp.toner, arr);
+    });
+    const list: {
+      toner: string;
+      estoque: number;
+      printers: {
+        idx: number;
+        secretaria: string;
+        local: string;
+        modelo: string;
+      }[];
+    }[] = [];
+    byToner.forEach((idxs, toner) => {
+      const est = estoqueAtual[toner] ?? 0;
+      if (est < idxs.length) {
+        list.push({
+          toner,
+          estoque: est,
+          printers: idxs.map((i) => ({
+            idx: i,
+            secretaria: impressoras[i].secretaria,
+            local: impressoras[i].local,
+            modelo: impressoras[i].modelo,
+          })),
+        });
+      }
+    });
+    return list.sort((a, b) => a.estoque - b.estoque);
+  }, []);
+
+  const [alocacao, setAlocacao] = useState<Record<string, number[]>>({});
+
+  const toggleAloc = (toner: string, idx: number, estoque: number) => {
+    setAlocacao((prev) => {
+      const cur = prev[toner] ?? [];
+      if (cur.includes(idx)) {
+        return { ...prev, [toner]: cur.filter((i) => i !== idx) };
+      }
+      if (cur.length >= estoque) return prev;
+      return { ...prev, [toner]: [...cur, idx] };
+    });
+  };
+
+  const sugerirAloc = (
+    toner: string,
+    printers: { idx: number; secretaria: string }[],
+    estoque: number,
+  ) => {
+    const isPrio = (s: string) => s === "SMS" || s === "SEMEC";
+    const prio = printers.filter((p) => isPrio(p.secretaria));
+    const others = printers.filter((p) => !isPrio(p.secretaria));
+    const chosen = [...prio, ...others].slice(0, estoque).map((p) => p.idx);
+    setAlocacao((prev) => ({ ...prev, [toner]: chosen }));
+  };
+
+  const naoAtendidasTotal = tonersEscassos.reduce((sum, t) => {
+    const alocadas = (alocacao[t.toner] ?? []).length;
+    return sum + (t.printers.length - alocadas);
+  }, 0);
+
+
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Topo */}
@@ -274,7 +342,128 @@ function Cenarios() {
         </CardContent>
       </Card>
 
+      {/* Alocação Manual de Estoque */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Alocação Manual de Estoque</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Para cada toner cujo estoque não cobre todas as impressoras que o
+            usam, escolha manualmente quais impressoras vão receber unidade
+            nessa rodada. O sistema impede alocar mais do que existe em
+            estoque.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {tonersEscassos.length === 0 ? (
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-success/10 border border-success/30 text-success">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">
+                Todos os toners têm estoque suficiente para pelo menos uma
+                unidade por impressora — nenhuma escolha manual necessária.
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                <strong>{tonersEscassos.length}</strong> toner(s) com estoque
+                insuficiente para todas as impressoras que usam —{" "}
+                <strong className="text-destructive">
+                  {naoAtendidasTotal}
+                </strong>{" "}
+                impressora(s) não vão receber toner nessa rodada.
+              </div>
+
+              {tonersEscassos.map((t) => {
+                const marcadas = alocacao[t.toner] ?? [];
+                const cheio = marcadas.length >= t.estoque;
+                return (
+                  <div
+                    key={t.toner}
+                    className="rounded-lg border border-border overflow-hidden"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-muted/40 px-4 py-3 border-b border-border">
+                      <div>
+                        <div className="font-semibold text-foreground">
+                          {t.toner}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {t.estoque} unidade(s) em estoque para{" "}
+                          {t.printers.length} impressoras
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={
+                            cheio
+                              ? "bg-success/15 text-success border border-success/30 hover:bg-success/15"
+                              : "bg-warning/20 text-warning border border-warning/40 hover:bg-warning/20"
+                          }
+                        >
+                          {marcadas.length} de {t.estoque} unidades alocadas
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            sugerirAloc(t.toner, t.printers, t.estoque)
+                          }
+                        >
+                          Sugerir automaticamente
+                        </Button>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-border">
+                      {t.printers.map((p) => {
+                        const checked = marcadas.includes(p.idx);
+                        const disabled = !checked && cheio;
+                        return (
+                          <li
+                            key={p.idx}
+                            className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
+                              disabled ? "opacity-50" : ""
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="font-medium text-foreground">
+                                {p.secretaria}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                — {p.local}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                · {p.modelo}
+                              </span>
+                            </div>
+                            <label
+                              className={`flex items-center gap-2 text-xs ${
+                                disabled ? "cursor-not-allowed" : "cursor-pointer"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={checked}
+                                disabled={disabled}
+                                onCheckedChange={() =>
+                                  toggleAloc(t.toner, p.idx, t.estoque)
+                                }
+                              />
+                              Alocar aqui
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Detalhes técnicos */}
+
       <Collapsible defaultOpen={false}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full">
