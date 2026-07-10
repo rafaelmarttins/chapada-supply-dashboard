@@ -416,7 +416,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Brother 6902W", tipo: "Laser PB", toner: "Brother TN3492" },
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Epson L5290", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "SLM-4070 USB", tipo: "Laser PB", toner: "Samsung D208L" },
-  { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "HP ML-2165 USB", tipo: "Laser PB", toner: "Samsung D101" },
+  { secretaria: "SEFIP", local: "Auditoria Tributária", modelo: "Samsung ML-2165 USB", tipo: "Laser PB", toner: "Samsung D101" },
   { secretaria: "SEFIP", local: "Contabilidade", modelo: "Brother DCP-5652DN", tipo: "Laser PB", toner: "Brother TN3472" },
   { secretaria: "SEFIP", local: "Contabilidade", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SEINFRA", local: "SEINFRA/DEMUTRAN", modelo: "Epson L575", tipo: "Jato de Tinta", toner: "Epson T664 Preto" },
