@@ -364,7 +364,13 @@ const TONER_ALIASES: Record<string, string[]> = {
   "Samsung D205L": ["D205", "205E"],
   "Pantum PB211EV": ["PB211", "PA210"],
   "Pantum TL411X": ["TL411", "TL-411", "411X"],
-  "Lexmark 56F0Z00": ["56F0", "LEXMARK MX"],
+  // Toner genuíno da família Lexmark MX421/MX521/MX622 (56F1000 rendimento
+  // padrão, 56F1H00 alta capacidade ~15k pág., 56F1X00 extra alta ~20k pág.).
+  "Lexmark 56F1H00": ["56F1000", "56F1H00", "56F1X00"],
+  // ATENÇÃO: "56F0Z00" NÃO é toner — é a Unidade de Imagem (cilindro/fotocondutor)
+  // da linha Lexmark MX, com troca bem mais rara (~60.000 páginas). Mantido aqui
+  // apenas para não deixar o item do estoque órfão do mapeamento.
+  "Lexmark 56F0Z00 (Unidade de Imagem)": ["56F0Z"],
   "Ricoh SP3710X": ["SP3710", "RICOH"],
   "Kit Plotter T3170": ["T3170", "PLOTTER"],
 };
