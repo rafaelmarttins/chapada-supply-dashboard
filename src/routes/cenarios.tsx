@@ -240,6 +240,12 @@ function TabResumo({ prioritarias, sim }: { prioritarias: string[]; sim: Sim }) 
           )}
         </CardContent>
       </Card>
+
+      <p className="text-[11px] text-muted-foreground px-1">
+        Locais clínicos de Saúde usam volume real observado (tanque recarregado
+        semanalmente). Educação usa uma estimativa provisória 2x maior que a
+        média — ajustar quando houver dado de campo.
+      </p>
     </div>
   );
 }
