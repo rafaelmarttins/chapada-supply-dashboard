@@ -446,7 +446,7 @@ export const impressoras: Impressora[] = [
   { secretaria: "SMS", local: "Paço Municipal/SMS", modelo: "HP P1005", tipo: "Laser PB", toner: "HP CB435A" },
   { secretaria: "SMS", local: "CEM - Recepção", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Coord. Enfermagem", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
-  { secretaria: "SMS", local: "CEM - Ultrassom", modelo: "Pantum P2500W", tipo: "Laser PB", toner: "Pantum PB211EV" },
+  { secretaria: "SMS", local: "CEM - Ultrassom", modelo: "HP M428fdw", tipo: "Laser PB", toner: "HP 258X" },
   { secretaria: "SMS", local: "CEM - Consultórios (x7)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Consultórios (x7)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
   { secretaria: "SMS", local: "CEM - Consultórios (x7)", modelo: "Epson L5590", tipo: "Jato de Tinta", toner: "Epson T544 Preto" },
