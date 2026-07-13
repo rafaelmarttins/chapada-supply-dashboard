@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Layers, Boxes, Upload, Printer, Monitor } from "lucide-react";
+import { LayoutDashboard, Boxes, Upload, Printer, Monitor } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,6 @@ import {
 
 const items = [
   { title: "Painel", url: "/", icon: LayoutDashboard },
-  { title: "Cenários", url: "/cenarios", icon: Layers },
   { title: "Impressoras", url: "/impressoras", icon: Monitor },
   { title: "Estoque", url: "/estoque", icon: Boxes },
   { title: "Importar", url: "/importar", icon: Upload },
