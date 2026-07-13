@@ -11,7 +11,13 @@ import {
   Upload,
   FileText,
 } from "lucide-react";
-import { resumo, alertasCriticos, fases } from "@/lib/data";
+import {
+  resumo,
+  fases,
+  autonomiaEstoque,
+  simularPriorizacao,
+  impressoras,
+} from "@/lib/data";
 
 export const Route = createFileRoute("/")({
   component: Painel,
@@ -20,9 +26,54 @@ export const Route = createFileRoute("/")({
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const fmtDias = (d: number) => {
+  if (!isFinite(d)) return "—";
+  if (d < 1) return "< 1 dia";
+  if (d < 30) return `${Math.round(d)} dias`;
+  const meses = d / 30;
+  return `${meses.toFixed(1)} meses`;
+};
+
 function Painel() {
-  const prontidao = 62;
-  const cobertura = 74;
+  // Score de Prontidão: % de toners com autonomia OK
+  const porToner = autonomiaEstoque.porToner;
+  const tonersComConsumo = porToner.filter((t) => t.status !== "sem_consumo");
+  const prontidao = tonersComConsumo.length
+    ? Math.round(
+        (tonersComConsumo.filter((t) => t.status === "ok").length /
+          tonersComConsumo.length) *
+          100
+      )
+    : 0;
+
+  // Cobertura: simulação sem priorização
+  const simGeral = simularPriorizacao([]);
+  const locaisComDado = simGeral.porLocal.filter((l) => l.situacao !== "sem_dado");
+  const cobertura = locaisComDado.length
+    ? Math.round(
+        (locaisComDado.filter((l) => l.situacao === "atendido").length /
+          locaisComDado.length) *
+          100
+      )
+    : 0;
+
+  // Alertas críticos por toner (autonomia real)
+  const alertasToner = porToner
+    .filter((t) => t.status === "critico" || t.status === "atencao")
+    .slice(0, 10);
+
+  const semEstoque = porToner.filter(
+    (t) => t.status === "critico" && t.estoqueUnidades === 0
+  ).length;
+  const emAtencao = porToner.filter((t) => t.status === "atencao").length;
+
+  // Locais mais críticos
+  const locaisCriticos = autonomiaEstoque.porLocais
+    .filter((l) => l.status === "critico" || l.status === "atencao")
+    .slice(0, 8);
+
+  const impCount = (toner: string) =>
+    impressoras.filter((i) => i.toner === toner).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -65,11 +116,9 @@ function Painel() {
         </CardContent>
       </Card>
 
-      {/* Main grid: KPIs + Alertas */}
+      {/* KPIs + Alertas */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left column — score + quick stats + valor */}
         <div className="space-y-6 lg:col-span-4">
-          {/* Score de prontidão */}
           <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
@@ -92,12 +141,11 @@ function Painel() {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                Baseado em estoque disponível, cobertura de ata e itens críticos.
+                Toners com autonomia OK sobre o total com consumo estimado.
               </p>
             </CardContent>
           </Card>
 
-          {/* Quick stats */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="shadow-sm">
               <CardContent className="p-4">
@@ -123,11 +171,13 @@ function Painel() {
                 <p className="mt-2 text-2xl font-bold text-foreground font-mono-display">
                   {cobertura}%
                 </p>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Locais atendidos sem priorização
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Valor do estoque */}
           <Card className="border-0 bg-primary text-primary-foreground shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 text-primary-foreground/80">
@@ -146,17 +196,17 @@ function Painel() {
           </Card>
         </div>
 
-        {/* Right column — alertas críticos */}
+        {/* Alertas por toner */}
         <div className="lg:col-span-8">
           <Card className="h-full shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Alertas Críticos e Disponibilidade
+                  Alertas Críticos por Toner
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Suprimentos zerados ou com risco iminente de ruptura.
+                  Autonomia calculada a partir do estoque, rendimento e consumo mensal estimado.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -165,14 +215,14 @@ function Painel() {
                   className="gap-1.5 border-destructive/30 bg-destructive/10 text-destructive"
                 >
                   <span className="h-2 w-2 rounded-full bg-destructive" />
-                  {resumo.itensCriticos} sem estoque
+                  {semEstoque} sem estoque
                 </Badge>
                 <Badge
                   variant="outline"
                   className="gap-1.5 border-warning/30 bg-warning/10 text-warning"
                 >
                   <span className="h-2 w-2 rounded-full bg-warning" />
-                  {resumo.estoqueBaixo} baixo
+                  {emAtencao} em atenção
                 </Badge>
               </div>
             </CardHeader>
@@ -181,33 +231,47 @@ function Painel() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-3 font-bold">Secretaria</th>
-                      <th className="px-4 py-3 font-bold">Local / Setor</th>
-                      <th className="px-4 py-3 font-bold">Suprimento</th>
-                      <th className="px-4 py-3 font-bold">Situação</th>
-                      <th className="px-4 py-3 font-bold text-right">Prazo</th>
+                      <th className="px-4 py-3 font-bold">Toner</th>
+                      <th className="px-4 py-3 font-bold text-right">Estoque</th>
+                      <th className="px-4 py-3 font-bold text-right">Impressoras</th>
+                      <th className="px-4 py-3 font-bold text-right">Autonomia</th>
+                      <th className="px-4 py-3 font-bold">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {alertasCriticos.map((a, i) => (
-                      <tr key={i} className="hover:bg-accent/40 transition-colors">
-                        <td className="px-4 py-3 font-medium">{a.secretaria}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{a.local}</td>
-                        <td className="px-4 py-3">{a.suprimento}</td>
+                    {alertasToner.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-4 py-6 text-center text-sm text-muted-foreground"
+                        >
+                          Nenhum toner em situação crítica ou de atenção.
+                        </td>
+                      </tr>
+                    )}
+                    {alertasToner.map((t) => (
+                      <tr key={t.toner} className="hover:bg-accent/40 transition-colors">
+                        <td className="px-4 py-3 font-medium">{t.toner}</td>
+                        <td className="px-4 py-3 text-right font-mono-display">
+                          {t.estoqueUnidades}
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">
+                          {impCount(t.toner)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs text-muted-foreground">
+                          {fmtDias(t.diasRestantes)}
+                        </td>
                         <td className="px-4 py-3">
-                          {a.situacao === "Sem estoque" ? (
-                            <Badge variant="destructive">{a.situacao}</Badge>
+                          {t.status === "critico" ? (
+                            <Badge variant="destructive">Crítico</Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="border-warning/30 bg-warning/10 text-warning"
                             >
-                              {a.situacao}
+                              Atenção
                             </Badge>
                           )}
-                        </td>
-                        <td className="px-4 py-3 text-right text-xs text-muted-foreground">
-                          {a.dias === 0 ? "Zerado" : `~${a.dias} dias`}
                         </td>
                       </tr>
                     ))}
@@ -219,7 +283,71 @@ function Painel() {
         </div>
       </div>
 
-      {/* Roadmap de 3 fases */}
+      {/* Locais mais críticos */}
+      <Card className="shadow-sm">
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base">Locais Mais Críticos</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Onde o suprimento aperta primeiro, considerando o toner de menor autonomia em cada local.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-bold">Secretaria</th>
+                  <th className="px-4 py-3 font-bold">Local</th>
+                  <th className="px-4 py-3 font-bold">Toner crítico</th>
+                  <th className="px-4 py-3 font-bold text-right">Autonomia</th>
+                  <th className="px-4 py-3 font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {locaisCriticos.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-6 text-center text-sm text-muted-foreground"
+                    >
+                      Nenhum local em situação crítica ou de atenção.
+                    </td>
+                  </tr>
+                )}
+                {locaisCriticos.map((l, i) => (
+                  <tr
+                    key={`${l.secretaria}-${l.local}-${i}`}
+                    className="hover:bg-accent/40 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-medium">{l.secretaria}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{l.local}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {l.tonerCritico ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-muted-foreground">
+                      {fmtDias(l.diasRestantes)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {l.status === "critico" ? (
+                        <Badge variant="destructive">Crítico</Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="border-warning/30 bg-warning/10 text-warning"
+                        >
+                          Atenção
+                        </Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Roadmap */}
       <Card className="shadow-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -228,9 +356,7 @@ function Painel() {
         </CardHeader>
         <CardContent className="pb-8">
           <div className="relative grid gap-8 md:grid-cols-3">
-            {/* connecting line */}
             <div className="absolute left-0 top-4 hidden h-0.5 w-full bg-border md:block" />
-
             {fases.map((f, i) => {
               const done = i < 2;
               const current = i === 1;
