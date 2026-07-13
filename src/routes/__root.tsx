@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Painel de Suprimentos de Impressão · CEGIT/DTI" },
       {
         property: "og:description",
-        content: "Gestão executiva do parque de impressoras e suprimentos — Chapadão do Sul.",
+        content: "Dashboard executivo de suprimentos de impressão da Prefeitura de Chapadão do Sul — CEGIT/DTI.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Painel de Suprimentos de Impressão · CEGIT/DTI" },
+      { name: "twitter:description", content: "Dashboard executivo de suprimentos de impressão da Prefeitura de Chapadão do Sul — CEGIT/DTI." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/199bef4b-4ea2-4a08-a049-ee5ab0196478/id-preview-412e22bd--83ad7b3d-1a0a-4292-9ed5-e0a5134551f6.lovable.app-1783909413538.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/199bef4b-4ea2-4a08-a049-ee5ab0196478/id-preview-412e22bd--83ad7b3d-1a0a-4292-9ed5-e0a5134551f6.lovable.app-1783909413538.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
